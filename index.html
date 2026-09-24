@@ -5,7 +5,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
   <title>2026 고연전 선수 얼굴 매칭 퀴즈 | KUBS 전력분석</title>
   <meta name="description" content="2026 정기고연전 5개 종목(농구, 야구, 빙구, 럭비, 축구) 194명 전체 선수 얼굴 매칭 퀴즈 (4지선다 / 주관식 직접 입력)">
-  <link rel="stylesheet" href="style.css?v=20260925_theme_01">
+  <link rel="stylesheet" href="style.css?v=20260925_brag_01">
   <!-- Pretendard Font -->
   <link rel="stylesheet" as="style" crossorigin href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/static/pretendard.min.css" />
   <script>
@@ -206,6 +206,29 @@
         </div>
       </div>
 
+      <!-- Brag Score Image Preview Modal -->
+      <div id="brag-modal-overlay" class="modal-overlay hidden" hidden>
+        <div class="modal-card brag-modal-card">
+          <div class="brag-modal-header">
+            <h3 class="brag-modal-title">📸 내 점수 카드</h3>
+            <button id="brag-modal-close-icon" class="icon-btn-close" aria-label="닫기">✕</button>
+          </div>
+          <div class="brag-image-wrapper">
+            <img id="brag-preview-img" src="" alt="내 점수 카드 미리보기">
+          </div>
+          <div class="brag-modal-actions">
+            <button id="brag-download-btn" class="primary-btn">
+              <span>💾 이미지 저장하기 (다운로드)</span>
+            </button>
+            <button id="brag-share-native-btn" class="secondary-btn">
+              <span>📤 SNS / 카카오톡 공유하기</span>
+            </button>
+          </div>
+        </div>
+      </div>
+      <!-- Hidden Canvas for High-Resolution Card Generation -->
+      <canvas id="brag-canvas" width="800" height="1000" style="display:none;"></canvas>
+
       <!-- Screen 1-C: Quiz Results -->
       <section id="result-screen" class="screen">
         <div class="result-header">
@@ -228,8 +251,14 @@
         </div>
 
         <div class="result-actions">
-          <button id="retry-btn" class="primary-btn">다시 풀기 🔄</button>
-          <button id="change-mode-btn" class="secondary-btn">조건 변경 / 다른 종목 🏆</button>
+          <button id="brag-score-btn" class="primary-btn brag-btn">
+            <span>📸 내 점수 자랑하기 (이미지 저장)</span>
+            <span class="btn-arrow">➔</span>
+          </button>
+          <div class="result-btn-row">
+            <button id="retry-btn" class="secondary-btn">다시 풀기 🔄</button>
+            <button id="change-mode-btn" class="secondary-btn">종목 변경 🏆</button>
+          </div>
           <button id="share-btn" class="share-btn">퀴즈 링크 복사 🔗</button>
         </div>
       </section>
@@ -273,8 +302,8 @@
   </div>
 
   <!-- Player Database (194 players) -->
-  <script src="data/players.js?v=20260925_theme_01"></script>
+  <script src="data/players.js?v=20260925_brag_01"></script>
   <!-- Main Application Logic -->
-  <script src="app.js?v=20260925_theme_01"></script>
+  <script src="app.js?v=20260925_brag_01"></script>
 </body>
 </html>

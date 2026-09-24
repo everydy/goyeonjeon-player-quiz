@@ -69,6 +69,13 @@
   const retryBtn = document.getElementById('retry-btn');
   const changeModeBtn = document.getElementById('change-mode-btn');
   const shareBtn = document.getElementById('share-btn');
+  const bragScoreBtn = document.getElementById('brag-score-btn');
+  const bragModalOverlay = document.getElementById('brag-modal-overlay');
+  const bragModalCloseIcon = document.getElementById('brag-modal-close-icon');
+  const bragPreviewImg = document.getElementById('brag-preview-img');
+  const bragDownloadBtn = document.getElementById('brag-download-btn');
+  const bragShareNativeBtn = document.getElementById('brag-share-native-btn');
+  const bragCanvas = document.getElementById('brag-canvas');
 
   // Study View Elements
   const studySearchInput = document.getElementById('study-search-input');
@@ -729,6 +736,340 @@
       alert(`링크: ${window.location.href}`);
     }
   });
+
+  // ==================== SCORE BRAG CARD GENERATION (HTML5 Canvas) ====================
+  function generateScoreCard() {
+    if (!bragCanvas) return null;
+    const ctx = bragCanvas.getContext('2d');
+    const width = 800;
+    const height = 1000;
+    bragCanvas.width = width;
+    bragCanvas.height = height;
+
+    const isDark = (document.documentElement.getAttribute('data-theme') === 'dark');
+
+    // Stats calculation
+    const total = userAnswers.length || 1;
+    const correctCount = userAnswers.filter(a => a.isCorrect).length;
+    const wrongCount = userAnswers.filter(a => !a.isCorrect && !a.isSkipped).length;
+    const skippedCount = skippedPlayers.length;
+    const accuracy = Math.round((correctCount / total) * 100);
+
+    // Color definitions based on theme
+    const colors = {
+      canvasBg: isDark ? '#121316' : '#f2f4f6',
+      cardBg: isDark ? '#1c1d22' : '#ffffff',
+      cardBorder: isDark ? 'rgba(255, 255, 255, 0.08)' : 'rgba(0, 0, 0, 0.06)',
+      boxBg: isDark ? '#25262e' : '#f9fafb',
+      boxBorder: isDark ? 'rgba(255, 255, 255, 0.06)' : '#e5e8eb',
+      textPrimary: isDark ? '#f9fafb' : '#191f28',
+      textSecondary: isDark ? '#b0b8c1' : '#4e5968',
+      textTertiary: isDark ? '#6b7684' : '#8b95a1',
+      blue: '#3182f6',
+      crimson: isDark ? '#f87171' : '#d32f2f',
+      yuBlue: isDark ? '#38bdf8' : '#004b97',
+      green: isDark ? '#10b981' : '#059669',
+      red: isDark ? '#f87171' : '#dc2626',
+      orange: isDark ? '#fbbf24' : '#d97706'
+    };
+
+    // Helper: Rounded Rectangle
+    function roundRect(x, y, w, h, r, fill, stroke, strokeW) {
+      ctx.beginPath();
+      ctx.moveTo(x + r, y);
+      ctx.lineTo(x + w - r, y);
+      ctx.quadraticCurveTo(x + w, y, x + w, y + r);
+      ctx.lineTo(x + w, y + h - r);
+      ctx.quadraticCurveTo(x + w, y + h, x + w - r, y + h);
+      ctx.lineTo(x + r, y + h);
+      ctx.quadraticCurveTo(x, y + h, x, y + h - r);
+      ctx.lineTo(x, y + r);
+      ctx.quadraticCurveTo(x, y, x + r, y);
+      ctx.closePath();
+      if (fill) {
+        ctx.fillStyle = fill;
+        ctx.fill();
+      }
+      if (stroke) {
+        ctx.strokeStyle = stroke;
+        ctx.lineWidth = strokeW || 1;
+        ctx.stroke();
+      }
+    }
+
+    // 1. Canvas Background
+    ctx.fillStyle = colors.canvasBg;
+    ctx.fillRect(0, 0, width, height);
+
+    // Decorative ambient circles
+    const gradKU = ctx.createRadialGradient(80, 80, 20, 80, 80, 240);
+    gradKU.addColorStop(0, isDark ? 'rgba(239, 68, 68, 0.16)' : 'rgba(211, 47, 47, 0.08)');
+    gradKU.addColorStop(1, 'transparent');
+    ctx.fillStyle = gradKU;
+    ctx.fillRect(0, 0, 400, 400);
+
+    const gradYU = ctx.createRadialGradient(720, 80, 20, 720, 80, 240);
+    gradYU.addColorStop(0, isDark ? 'rgba(56, 189, 248, 0.18)' : 'rgba(0, 75, 151, 0.08)');
+    gradYU.addColorStop(1, 'transparent');
+    ctx.fillStyle = gradYU;
+    ctx.fillRect(400, 0, 400, 400);
+
+    // 2. Main Floating Card
+    roundRect(40, 40, 720, 920, 28, colors.cardBg, colors.cardBorder, 2);
+
+    // 3. Brand Pill
+    roundRect(240, 80, 320, 36, 18, isDark ? 'rgba(49, 130, 246, 0.18)' : '#e8f3ff', isDark ? 'rgba(49, 130, 246, 0.35)' : 'rgba(49, 130, 246, 0.2)', 1.5);
+    ctx.textAlign = 'center';
+    ctx.textBaseline = 'middle';
+    ctx.font = '800 15px "Pretendard", -apple-system, sans-serif';
+    ctx.fillStyle = colors.blue;
+    ctx.fillText('🔴 KU vs YU 🔵 · 2026 정기고연전', 400, 98);
+
+    // 4. Header Titles
+    ctx.font = '900 34px "Pretendard", -apple-system, sans-serif';
+    ctx.fillStyle = colors.textPrimary;
+    ctx.fillText('선수 얼굴 매칭 퀴즈 성적표', 400, 155);
+
+    ctx.font = '700 15px "Pretendard", -apple-system, sans-serif';
+    ctx.fillStyle = colors.textSecondary;
+    ctx.fillText('KUBS 고려대학교 교육방송국 전력분석', 400, 190);
+
+    // 5. Divider Line
+    ctx.beginPath();
+    ctx.moveTo(80, 218);
+    ctx.lineTo(720, 218);
+    ctx.strokeStyle = colors.boxBorder;
+    ctx.lineWidth = 1.5;
+    ctx.stroke();
+
+    // 6. Tier Calculation & Badge
+    let tierTitle = '';
+    let tierColor = '';
+    let subQuote = '';
+    if (accuracy === 100) {
+      tierTitle = '🔥 고연전 전력분석의 신 (마스터)';
+      tierColor = '#f59e0b';
+      subQuote = '194명 엔트리를 완벽하게 암기한 고연전의 살아있는 백과사전!';
+    } else if (accuracy >= 80) {
+      tierTitle = '🎖️ 정기고연전 준전문가 (상위 5%)';
+      tierColor = colors.blue;
+      subQuote = '놀라운 눈썰미! 중계 해설진 급의 날카로운 전력분석력!';
+    } else if (accuracy >= 60) {
+      tierTitle = '🎓 든든한 고연전 서포터';
+      tierColor = colors.green;
+      subQuote = '선수들의 얼굴을 척척 알아보는 진정한 고연전 학우!';
+    } else if (accuracy >= 40) {
+      tierTitle = '🌱 열정 넘치는 고연전 루키';
+      tierColor = '#8b5cf6';
+      subQuote = '응원의 첫걸음! 도감에서 조금만 더 복습해보세요!';
+    } else {
+      tierTitle = '📖 전력분석 도감 입문자';
+      tierColor = colors.textSecondary;
+      subQuote = '아직 낯선 얼굴들이 있죠? 선수 도감에서 얼굴을 익혀봐요!';
+    }
+
+    roundRect(200, 245, 400, 44, 22, isDark ? 'rgba(49, 130, 246, 0.12)' : '#f0f6ff', tierColor, 2);
+    ctx.font = '900 17px "Pretendard", -apple-system, sans-serif';
+    ctx.fillStyle = tierColor;
+    ctx.fillText(tierTitle, 400, 267);
+
+    // 7. Large Score Display
+    ctx.font = '900 78px "Pretendard", -apple-system, sans-serif';
+    ctx.fillStyle = colors.blue;
+    ctx.fillText(`${correctCount} / ${total}`, 400, 355);
+
+    ctx.font = '800 22px "Pretendard", -apple-system, sans-serif';
+    ctx.fillStyle = colors.textPrimary;
+    ctx.fillText(`정답률 ${accuracy}% (총 ${score}점 획득)`, 400, 408);
+
+    ctx.font = '600 15px "Pretendard", -apple-system, sans-serif';
+    ctx.fillStyle = colors.textSecondary;
+    ctx.fillText(`"${subQuote}"`, 400, 442);
+
+    // 8. Quiz Setting 3-Box Grid
+    const sportName = (selectedSport === 'all') ? '🏆 전 종목' : `${sportIcons[selectedSport] || ''} ${selectedSport}`;
+    const diffName = (selectedDifficulty === 'choice') ? '보통' : '어려움';
+    const schoolName = (selectedSchool === 'all') ? '양교 전체' : (selectedSchool === '고려대' ? '🔴 고려대만' : '🔵 연세대만');
+
+    const boxY = 480;
+    const boxH = 88;
+    const boxW = 195;
+
+    // Box 1: 종목
+    roundRect(75, boxY, boxW, boxH, 16, colors.boxBg, colors.boxBorder, 1.5);
+    ctx.font = '700 13px "Pretendard", -apple-system, sans-serif';
+    ctx.fillStyle = colors.textTertiary;
+    ctx.fillText('응시 종목', 75 + boxW / 2, boxY + 28);
+    ctx.font = '800 15px "Pretendard", -apple-system, sans-serif';
+    ctx.fillStyle = colors.textPrimary;
+    ctx.fillText(sportName, 75 + boxW / 2, boxY + 58);
+
+    // Box 2: 난이도
+    roundRect(302, boxY, boxW, boxH, 16, colors.boxBg, colors.boxBorder, 1.5);
+    ctx.font = '700 13px "Pretendard", -apple-system, sans-serif';
+    ctx.fillStyle = colors.textTertiary;
+    ctx.fillText('퀴즈 난이도', 302 + boxW / 2, boxY + 28);
+    ctx.font = '800 15px "Pretendard", -apple-system, sans-serif';
+    ctx.fillStyle = colors.textPrimary;
+    ctx.fillText(diffName, 302 + boxW / 2, boxY + 58);
+
+    // Box 3: 대상 학교
+    roundRect(530, boxY, boxW, boxH, 16, colors.boxBg, colors.boxBorder, 1.5);
+    ctx.font = '700 13px "Pretendard", -apple-system, sans-serif';
+    ctx.fillStyle = colors.textTertiary;
+    ctx.fillText('출제 범위', 530 + boxW / 2, boxY + 28);
+    ctx.font = '800 15px "Pretendard", -apple-system, sans-serif';
+    ctx.fillStyle = colors.textPrimary;
+    ctx.fillText(schoolName, 530 + boxW / 2, boxY + 58);
+
+    // 9. Detailed Stats Box
+    const statBoxY = 590;
+    const statBoxH = 135;
+    roundRect(75, statBoxY, 650, statBoxH, 20, colors.boxBg, colors.boxBorder, 1.5);
+
+    // Correct
+    ctx.font = '700 14px "Pretendard", -apple-system, sans-serif';
+    ctx.fillStyle = colors.textSecondary;
+    ctx.fillText('정답', 183, statBoxY + 36);
+    ctx.font = '900 24px "Pretendard", -apple-system, sans-serif';
+    ctx.fillStyle = colors.green;
+    ctx.fillText(`${correctCount}명`, 183, statBoxY + 70);
+
+    // Wrong
+    ctx.font = '700 14px "Pretendard", -apple-system, sans-serif';
+    ctx.fillStyle = colors.textSecondary;
+    ctx.fillText('오답', 400, statBoxY + 36);
+    ctx.font = '900 24px "Pretendard", -apple-system, sans-serif';
+    ctx.fillStyle = colors.red;
+    ctx.fillText(`${wrongCount}명`, 400, statBoxY + 70);
+
+    // Skipped
+    ctx.font = '700 14px "Pretendard", -apple-system, sans-serif';
+    ctx.fillStyle = colors.textSecondary;
+    ctx.fillText('건너뜀', 616, statBoxY + 36);
+    ctx.font = '900 24px "Pretendard", -apple-system, sans-serif';
+    ctx.fillStyle = colors.orange;
+    ctx.fillText(`${skippedCount}명`, 616, statBoxY + 70);
+
+    // Divider inside stat box
+    ctx.beginPath();
+    ctx.moveTo(95, statBoxY + 95);
+    ctx.lineTo(705, statBoxY + 95);
+    ctx.strokeStyle = colors.boxBorder;
+    ctx.stroke();
+
+    ctx.font = '700 13px "Pretendard", -apple-system, sans-serif';
+    ctx.fillStyle = colors.textSecondary;
+    ctx.fillText(`🔥 푼 문제 수: ${total}문항 | 등록 선수 194명 전원 탑재`, 400, statBoxY + 115);
+
+    // 10. Footer Section
+    const nowStr = new Date().toLocaleDateString('ko-KR', { year: 'numeric', month: 'long', day: 'numeric' });
+    ctx.font = '700 13px "Pretendard", -apple-system, sans-serif';
+    ctx.fillStyle = colors.textTertiary;
+    ctx.fillText(`${nowStr} · KUBS 고려대학교 교육방송국 공식 인증`, 400, 775);
+
+    // URL Pill
+    roundRect(220, 805, 360, 42, 21, isDark ? 'rgba(49, 130, 246, 0.16)' : '#e8f3ff', colors.blue, 1.5);
+    ctx.font = '800 14px "Pretendard", -apple-system, sans-serif';
+    ctx.fillStyle = colors.blue;
+    ctx.fillText('🔗 kubs-player-quiz-2026.netlify.app', 400, 826);
+
+    return bragCanvas.toDataURL('image/png');
+  }
+
+  function downloadScoreImage(dataUrl) {
+    const total = userAnswers.length || 1;
+    const correctCount = userAnswers.filter(a => a.isCorrect).length;
+    const accuracy = Math.round((correctCount / total) * 100);
+
+    const link = document.createElement('a');
+    link.download = `2026_고연전_선수퀴즈_${accuracy}점.png`;
+    link.href = dataUrl || bragPreviewImg.src;
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+  }
+
+  // Open Brag Modal & Generate Image
+  if (bragScoreBtn) {
+    bragScoreBtn.addEventListener('click', () => {
+      playSound('click');
+      const dataUrl = generateScoreCard();
+      if (!dataUrl) return;
+
+      bragPreviewImg.src = dataUrl;
+      showElement(bragModalOverlay);
+
+      // Automatically trigger download
+      downloadScoreImage(dataUrl);
+    });
+  }
+
+  if (bragDownloadBtn) {
+    bragDownloadBtn.addEventListener('click', () => {
+      playSound('click');
+      downloadScoreImage(bragPreviewImg.src);
+    });
+  }
+
+  if (bragShareNativeBtn) {
+    bragShareNativeBtn.addEventListener('click', async () => {
+      playSound('click');
+      const total = userAnswers.length || 1;
+      const correctCount = userAnswers.filter(a => a.isCorrect).length;
+      const accuracy = Math.round((correctCount / total) * 100);
+
+      if (navigator.share && bragCanvas) {
+        try {
+          bragCanvas.toBlob(async (blob) => {
+            if (!blob) return;
+            const file = new File([blob], `2026_고연전_선수퀴즈_${accuracy}점.png`, { type: 'image/png' });
+            if (navigator.canShare && navigator.canShare({ files: [file] })) {
+              await navigator.share({
+                title: '2026 고연전 선수 얼굴 매칭 퀴즈',
+                text: `나 2026 고연전 선수 얼굴 퀴즈에서 ${accuracy}% 맞췄어! 너도 194명 다 맞출 수 있는지 도전해봐!`,
+                files: [file]
+              });
+            } else {
+              await navigator.share({
+                title: '2026 고연전 선수 얼굴 매칭 퀴즈',
+                text: `나 2026 고연전 선수 얼굴 퀴즈에서 ${accuracy}% 맞췄어! 너도 도전해봐! 👉 https://kubs-player-quiz-2026.netlify.app`,
+                url: window.location.href
+              });
+            }
+          });
+          return;
+        } catch (err) {
+          console.log('Share canceled or failed', err);
+        }
+      }
+
+      // Fallback: Copy link
+      if (navigator.clipboard) {
+        navigator.clipboard.writeText(window.location.href).then(() => {
+          alert('퀴즈 페이지 링크가 복사되었습니다! 친구들에게 공유해보세요.');
+        });
+      } else {
+        alert(`퀴즈 링크: ${window.location.href}`);
+      }
+    });
+  }
+
+  if (bragModalCloseIcon) {
+    bragModalCloseIcon.addEventListener('click', () => {
+      hideElement(bragModalOverlay);
+      playSound('click');
+    });
+  }
+
+  if (bragModalOverlay) {
+    bragModalOverlay.addEventListener('click', (e) => {
+      if (e.target === bragModalOverlay) {
+        hideElement(bragModalOverlay);
+        playSound('click');
+      }
+    });
+  }
 
   // ==================== STUDY / ROSTER LOGIC ====================
   function renderRoster() {
