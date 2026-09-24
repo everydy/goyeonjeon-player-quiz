@@ -160,24 +160,45 @@
     }
   }
 
+  // Safe Visibility Helpers (combines CSS class + HTML attribute)
+  function showElement(el) {
+    if (!el) return;
+    el.classList.remove('hidden');
+    el.hidden = false;
+  }
+
+  function hideElement(el) {
+    if (!el) return;
+    el.classList.add('hidden');
+    el.hidden = true;
+  }
+
+  // Branded Image Fallback on Error (prevents broken image icon)
+  function applyImageFallback(img, player) {
+    if (!img) return;
+    img.onerror = function() {
+      const bg = (player && player.school === '고려대') ? '%239e1b32' : '%23003876';
+      const schoolLabel = (player && player.school) ? player.school : '선수';
+      const initial = encodeURIComponent((player && player.name) ? player.name.charAt(0) : '선');
+      this.src = `data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" width="240" height="240" viewBox="0 0 240 240"><rect width="240" height="240" fill="${bg}"/><circle cx="120" cy="90" r="45" fill="%23ffffff" opacity="0.88"/><path d="M50 215 C50 145 190 145 190 215 Z" fill="%23ffffff" opacity="0.88"/><text x="120" y="104" font-size="38" font-weight="900" fill="${bg}" text-anchor="middle" font-family="sans-serif">${initial}</text></svg>`;
+      this.onerror = null;
+    };
+  }
+
   // Tab Switching
   tabQuiz.addEventListener('click', () => {
     tabQuiz.classList.add('active');
     tabStudy.classList.remove('active');
-    quizFlowContainer.classList.remove('hidden');
-    quizFlowContainer.hidden = false;
-    studyFlowContainer.classList.add('hidden');
-    studyFlowContainer.hidden = true;
+    showElement(quizFlowContainer);
+    hideElement(studyFlowContainer);
     playSound('click');
   });
 
   tabStudy.addEventListener('click', () => {
     tabStudy.classList.add('active');
     tabQuiz.classList.remove('active');
-    studyFlowContainer.classList.remove('hidden');
-    studyFlowContainer.hidden = false;
-    quizFlowContainer.classList.add('hidden');
-    quizFlowContainer.hidden = true;
+    showElement(studyFlowContainer);
+    hideElement(quizFlowContainer);
     playSound('click');
     renderRoster();
   });
@@ -278,7 +299,7 @@
 
   function loadQuestion() {
     isAnswerLocked = false;
-    hintBox.classList.add('hidden');
+    hideElement(hintBox);
     hintBtn.textContent = '💡 힌트 보기';
 
     const player = quizQuestions[currentIndex];
@@ -292,9 +313,9 @@
     // Combo
     if (currentCombo >= 2) {
       comboBadge.textContent = `🔥 ${currentCombo}연속 정답!`;
-      comboBadge.classList.remove('hidden');
+      showElement(comboBadge);
     } else {
-      comboBadge.classList.add('hidden');
+      hideElement(comboBadge);
     }
 
     // Meta Tags
@@ -302,7 +323,8 @@
     cardSportTag.textContent = `${icon} ${player.sport}`;
     cardDiffTag.textContent = selectedDifficulty === 'choice' ? '보통' : '어려움';
 
-    // Photo
+    // Photo with error fallback
+    applyImageFallback(playerImg, player);
     playerImg.src = player.image;
     playerImg.alt = `${player.school} ${player.sport} 선수`;
 
@@ -317,20 +339,21 @@
 
     // Render Mode Form
     if (selectedDifficulty === 'choice') {
-      optionsContainer.classList.remove('hidden');
-      optionsContainer.hidden = false;
-      inputModeContainer.classList.add('hidden');
-      inputModeContainer.hidden = true;
+      showElement(optionsContainer);
+      hideElement(inputModeContainer);
       generateChoiceOptions(player);
     } else {
-      optionsContainer.classList.add('hidden');
-      optionsContainer.hidden = true;
-      inputModeContainer.classList.remove('hidden');
-      inputModeContainer.hidden = false;
+      hideElement(optionsContainer);
+      showElement(inputModeContainer);
       textAnswerInput.value = '';
       textAnswerInput.disabled = false;
       textSubmitBtn.disabled = false;
-      setTimeout(() => textAnswerInput.focus(), 150);
+      setTimeout(() => {
+        textAnswerInput.focus();
+        if (textAnswerInput.scrollIntoView) {
+          textAnswerInput.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+        }
+      }, 150);
     }
   }
 
@@ -344,8 +367,19 @@
       candidates = allPlayers.filter(p => p.name !== targetPlayer.name);
     }
 
-    const distractors = [...candidates].sort(() => Math.random() - 0.5).slice(0, 3);
-    const options = [targetPlayer, ...distractors].sort(() => Math.random() - 0.5);
+    // Deduplicate candidates by name so identical names don't appear twice among choices
+    const uniqueCandidateNames = new Set([targetPlayer.name]);
+    const validCandidates = [];
+    const shuffledCandidates = [...candidates].sort(() => Math.random() - 0.5);
+    for (const c of shuffledCandidates) {
+      if (!uniqueCandidateNames.has(c.name)) {
+        uniqueCandidateNames.add(c.name);
+        validCandidates.push(c);
+        if (validCandidates.length === 3) break;
+      }
+    }
+
+    const options = [targetPlayer, ...validCandidates].sort(() => Math.random() - 0.5);
 
     optionsContainer.innerHTML = '';
     options.forEach(opt => {
@@ -458,19 +492,19 @@
 
   // Show Chosung button in hard mode
   showChosungBtn.addEventListener('click', () => {
-    hintBox.classList.remove('hidden');
+    showElement(hintBox);
     hintBtn.textContent = '💡 힌트 접기';
     playSound('click');
   });
 
   // Hint Toggle
   hintBtn.addEventListener('click', () => {
-    const isHidden = hintBox.classList.contains('hidden');
+    const isHidden = hintBox.hidden || hintBox.classList.contains('hidden');
     if (isHidden) {
-      hintBox.classList.remove('hidden');
+      showElement(hintBox);
       hintBtn.textContent = '💡 힌트 접기';
     } else {
-      hintBox.classList.add('hidden');
+      hideElement(hintBox);
       hintBtn.textContent = '💡 힌트 보기';
     }
     playSound('click');
@@ -492,6 +526,7 @@
       modalResultBanner.querySelector('.result-title').textContent = `아쉬워요! 정답은 ${player.name} 선수입니다.`;
     }
 
+    applyImageFallback(modalPlayerImg, player);
     modalPlayerImg.src = player.image;
     modalSchoolBadge.textContent = `${player.school} · ${player.sport}`;
     modalSchoolBadge.style.color = player.school === '고려대' ? '#ff6b81' : '#60a5fa';
@@ -514,11 +549,16 @@
     const isLast = (currentIndex === quizQuestions.length - 1);
     modalNextBtn.querySelector('span:first-child').textContent = isLast ? '최종 결과 확인하기' : '다음 문제 풀기';
 
-    modalOverlay.classList.remove('hidden');
+    showElement(modalOverlay);
   }
 
   modalNextBtn.addEventListener('click', () => {
-    modalOverlay.classList.add('hidden');
+    hideElement(modalOverlay);
+    playSound('click');
+    // If opened from Study mode or Results Review mode, just close the modal!
+    if (!studyFlowContainer.hidden || resultScreen.classList.contains('active')) {
+      return;
+    }
     currentIndex++;
     if (currentIndex < quizQuestions.length) {
       loadQuestion();
@@ -591,6 +631,8 @@
           <div class="review-sub">${p.school} · ${p.sport} · ${p.number !== '-' ? '등번호 ' + p.number + '번' : ''}</div>
         </div>
       `;
+      const thumb = item.querySelector('.review-thumb');
+      applyImageFallback(thumb, p);
       // Clicking review item opens the player modal
       item.addEventListener('click', () => {
         showModal(p, ans.isCorrect, ans.isSkipped);
@@ -667,6 +709,8 @@
         <div class="roster-meta">${p.school} · ${p.sport}</div>
         <div class="roster-meta roster-num">${p.number !== '-' ? 'No.' + p.number : ''} ${p.position || ''}</div>
       `;
+      const img = card.querySelector('img');
+      applyImageFallback(img, p);
       card.addEventListener('click', () => {
         showModal(p, true, false);
         modalResultBanner.className = 'result-banner correct';
