@@ -34,23 +34,21 @@
 
 ## 2. Foundations & Tokens (디자인 토큰)
 
-### Color Palette (토스 TDS 표준 색상)
+### Dual Theme Palette (토스 TDS 라이트 & 다크 모드 규격)
 
 ```css
-:root {
-  /* Surface & Canvas */
+/* 라이트 모드 (기본) */
+:root, [data-theme="light"] {
   --bg-canvas: #f2f4f6;          /* 토스 쿨 그레이 배경 */
   --bg-surface: #ffffff;         /* 순백 카드 서피스 */
   --bg-subtle: #f9fafb;          /* 입력창 및 보조 영역 배경 */
-  --bg-element-active: #e5e8eb;  /* 비활성 칩 및 트랙 배경 */
+  --bg-track: #e5e8eb;           /* 비활성 칩 및 트랙 배경 */
 
-  /* Text Colors */
   --text-primary: #191f28;       /* 토스 블랙 (선명한 딥 차콜) */
   --text-secondary: #4e5968;     /* 부드러운 본문 그레이 */
   --text-tertiary: #8b95a1;      /* 캡션 및 플레이스홀더 */
   --text-disabled: #b0b8c1;      /* 비활성 텍스트 */
 
-  /* Brand & Accents */
   --toss-blue: #3182f6;          /* 토스 블루 (Primary 액션) */
   --toss-blue-hover: #1b64da;    /* 호버 시 딥 블루 */
   --toss-blue-tint: #e8f3ff;     /* 블루 틴트 배경 */
@@ -60,31 +58,35 @@
   --yu-blue: #004b97;            /* 연세대학교 로열 블루 */
   --yu-blue-tint: #e0f2fe;       /* 연대 뱃지 틴트 */
 
-  /* Semantic Feedback */
-  --success: #059669;            /* 정답 초록 */
-  --success-tint: #d1fae5;
-  --danger: #dc2626;             /* 오답 빨강 */
-  --danger-tint: #fee2e2;
-  --warning: #d97706;            /* 힌트/건너뜀 오렌지 */
-  --warning-tint: #fef3c7;
-
-  /* Elevation Shadows */
   --shadow-sm: 0 1px 3px rgba(0, 0, 0, 0.04), 0 1px 2px rgba(0, 0, 0, 0.02);
   --shadow-md: 0 4px 16px rgba(0, 0, 0, 0.05), 0 1px 3px rgba(0, 0, 0, 0.03);
-  --shadow-lg: 0 10px 30px rgba(0, 0, 0, 0.08), 0 2px 6px rgba(0, 0, 0, 0.04);
-  --shadow-floating: 0 20px 40px rgba(0, 0, 0, 0.12);
+  --shadow-floating: 0 20px 48px rgba(0, 0, 0, 0.14);
+}
 
-  /* Radius */
-  --radius-xl: 24px;
-  --radius-lg: 20px;
-  --radius-md: 14px;
-  --radius-sm: 10px;
-  --radius-pill: 9999px;
+/* 다크 모드 (TDS Dark) */
+[data-theme="dark"] {
+  --bg-canvas: #121316;          /* 토스 다크 시그니처 딥 백그라운드 */
+  --bg-surface: #1c1d22;         /* 플로팅 다크 카드 서피스 */
+  --bg-subtle: #25262e;          /* 칩, 보조 영역, 인풋 배경 */
+  --bg-track: #2c2d36;           /* 세그먼트 탭 트랙 */
 
-  /* Motion */
-  --ease-toss: cubic-bezier(0.16, 1, 0.3, 1);
-  --duration-quick: 0.18s;
-  --duration-normal: 0.28s;
+  --text-primary: #f9fafb;       /* 선명한 화이트 */
+  --text-secondary: #b0b8c1;     /* 서브 본문 라이트 그레이 */
+  --text-tertiary: #6b7684;      /* 캡션 쿨 그레이 */
+  --text-disabled: #4e5968;
+
+  --toss-blue: #3182f6;          /* 선명한 토스 블루 */
+  --toss-blue-hover: #4a94fc;
+  --toss-blue-tint: rgba(49, 130, 246, 0.18);
+
+  --ku-crimson: #f87171;         /* 다크 모드 가독성을 위한 브라이트 크림슨 */
+  --ku-crimson-tint: rgba(239, 68, 68, 0.18);
+  --yu-blue: #38bdf8;            /* 다크 모드 가독성을 위한 스카이 블루 */
+  --yu-blue-tint: rgba(56, 189, 248, 0.18);
+
+  --shadow-sm: 0 1px 4px rgba(0, 0, 0, 0.35);
+  --shadow-md: 0 4px 16px rgba(0, 0, 0, 0.45);
+  --shadow-floating: 0 20px 48px rgba(0, 0, 0, 0.7);
 }
 ```
 

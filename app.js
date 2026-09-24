@@ -18,6 +18,7 @@
   const countSelector = document.getElementById('count-selector');
   const startQuizBtn = document.getElementById('start-quiz-btn');
   const soundToggleBtn = document.getElementById('sound-toggle-btn');
+  const themeToggleBtn = document.getElementById('theme-toggle-btn');
 
   // Quiz DOM Elements
   const questionIndexText = document.getElementById('question-index-text');
@@ -245,6 +246,57 @@
     soundToggleBtn.textContent = soundEnabled ? '🔊' : '🔇';
     if (soundEnabled) playSound('click');
   });
+
+  // ==================== THEME MANAGEMENT (Light / Dark) ====================
+  function initTheme() {
+    let savedTheme = null;
+    try {
+      savedTheme = localStorage.getItem('goyeonjeon_theme');
+    } catch (e) {}
+    const prefersDark = window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches;
+    const initialTheme = savedTheme || (prefersDark ? 'dark' : 'light');
+    applyTheme(initialTheme, false);
+
+    // Listen to OS system theme changes if user hasn't explicitly set preference
+    if (window.matchMedia) {
+      window.matchMedia('(prefers-color-scheme: dark)').addEventListener('change', (e) => {
+        let hasSaved = false;
+        try {
+          hasSaved = !!localStorage.getItem('goyeonjeon_theme');
+        } catch (err) {}
+        if (!hasSaved) {
+          applyTheme(e.matches ? 'dark' : 'light', false);
+        }
+      });
+    }
+  }
+
+  function applyTheme(theme, save = true) {
+    document.documentElement.setAttribute('data-theme', theme);
+    if (save) {
+      try {
+        localStorage.setItem('goyeonjeon_theme', theme);
+      } catch (err) {}
+    }
+    if (themeToggleBtn) {
+      themeToggleBtn.textContent = theme === 'dark' ? '☀️' : '🌙';
+      themeToggleBtn.title = theme === 'dark' ? '라이트 모드로 전환' : '다크 모드로 전환';
+      themeToggleBtn.setAttribute('aria-label', themeToggleBtn.title);
+    }
+  }
+
+  function toggleTheme() {
+    const currentTheme = document.documentElement.getAttribute('data-theme') || 'light';
+    const nextTheme = currentTheme === 'dark' ? 'light' : 'dark';
+    applyTheme(nextTheme, true);
+    playSound('click');
+  }
+
+  if (themeToggleBtn) {
+    themeToggleBtn.addEventListener('click', toggleTheme);
+  }
+
+  initTheme();
 
   // Start Quiz
   startQuizBtn.addEventListener('click', () => {

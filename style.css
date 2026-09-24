@@ -1,14 +1,19 @@
 /* ==========================================================================
    2026 정기고연전 선수 얼굴 매칭 퀴즈 - Toss Design System (TDS) Edition
-   Clean light canvas, floating white cards, crisp typography, and high affordance.
+   Dual Theme Architecture: Light & Dark Mode Support
    ========================================================================== */
 
-:root {
+:root, [data-theme="light"] {
   /* Surface & Canvas */
   --bg-canvas: #f2f4f6;          /* 토스 시그니처 쿨 그레이 */
   --bg-surface: #ffffff;         /* 순백 카드 서피스 */
   --bg-subtle: #f9fafb;          /* 연한 배경 영역 */
   --bg-track: #e5e8eb;           /* 탭 및 트랙 배경 */
+  --bg-input: #ffffff;           /* 입력창 배경 */
+  --chip-hover-bg: #eef1f4;      /* 칩/버튼 호버 배경 */
+
+  --border-subtle: rgba(0, 0, 0, 0.04);
+  --border-default: rgba(0, 0, 0, 0.08);
 
   /* Text Colors (Toss Monochrome) */
   --text-primary: #191f28;       /* 토스 블랙 (깊은 차콜) */
@@ -21,6 +26,7 @@
   --toss-blue: #3182f6;          /* 토스 시그니처 블루 */
   --toss-blue-hover: #1b64da;
   --toss-blue-tint: #e8f3ff;
+  --toss-blue-tint-text: #1b64da;
   
   --ku-crimson: #d32f2f;         /* 고려대학교 크림슨 */
   --ku-crimson-tint: #fee2e2;
@@ -52,6 +58,9 @@
   --shadow-lg: 0 10px 30px rgba(0, 0, 0, 0.08), 0 2px 6px rgba(0, 0, 0, 0.04);
   --shadow-floating: 0 20px 48px rgba(0, 0, 0, 0.14);
 
+  --modal-backdrop: rgba(15, 19, 24, 0.45);
+  --photo-bg: #f2f4f6;
+
   /* Radius */
   --radius-xl: 24px;
   --radius-lg: 20px;
@@ -63,6 +72,121 @@
   --ease-toss: cubic-bezier(0.16, 1, 0.3, 1);
   --duration-fast: 0.16s;
   --duration-normal: 0.26s;
+}
+
+[data-theme="dark"] {
+  /* Surface & Canvas (TDS Dark) */
+  --bg-canvas: #121316;          /* 토스 다크 시그니처 딥 백그라운드 */
+  --bg-surface: #1c1d22;         /* 플로팅 다크 카드 서피스 */
+  --bg-subtle: #25262e;          /* 칩, 보조 영역, 인풋 배경 */
+  --bg-track: #2c2d36;           /* 세그먼트 탭 트랙 */
+  --bg-input: #25262e;           /* 입력창 배경 */
+  --chip-hover-bg: #32333e;      /* 칩/버튼 호버 배경 */
+
+  --border-subtle: rgba(255, 255, 255, 0.06);
+  --border-default: rgba(255, 255, 255, 0.1);
+
+  /* Text Colors (Toss Dark Monochrome) */
+  --text-primary: #f9fafb;       /* 선명한 화이트 */
+  --text-secondary: #b0b8c1;     /* 서브 본문 라이트 그레이 */
+  --text-tertiary: #6b7684;      /* 캡션 쿨 그레이 */
+  --text-disabled: #4e5968;
+  --text-inverse: #191f28;
+
+  /* Brand Accents */
+  --toss-blue: #3182f6;          /* 선명한 토스 블루 */
+  --toss-blue-hover: #4a94fc;
+  --toss-blue-tint: rgba(49, 130, 246, 0.18);
+  --toss-blue-tint-text: #60a5fa;
+
+  --ku-crimson: #f87171;         /* 다크 모드용 고대 브라이트 크림슨 */
+  --ku-crimson-tint: rgba(239, 68, 68, 0.18);
+  --ku-crimson-dark: #fca5a5;
+
+  --yu-blue: #38bdf8;            /* 다크 모드용 연대 스카이 블루 */
+  --yu-blue-tint: rgba(56, 189, 248, 0.18);
+  --yu-blue-dark: #7dd3fc;
+
+  /* Semantic Feedback */
+  --success: #10b981;
+  --success-tint: rgba(16, 185, 129, 0.16);
+  --success-border: rgba(16, 185, 129, 0.35);
+  --success-text: #6ee7b7;
+
+  --danger: #f87171;
+  --danger-tint: rgba(248, 113, 113, 0.16);
+  --danger-border: rgba(248, 113, 113, 0.35);
+  --danger-text: #fca5a5;
+
+  --warning: #fbbf24;
+  --warning-tint: rgba(251, 191, 36, 0.16);
+  --warning-border: rgba(251, 191, 36, 0.35);
+  --warning-text: #fde68a;
+
+  /* Shadows for Dark Mode */
+  --shadow-sm: 0 1px 4px rgba(0, 0, 0, 0.35);
+  --shadow-md: 0 4px 16px rgba(0, 0, 0, 0.45);
+  --shadow-lg: 0 10px 30px rgba(0, 0, 0, 0.55);
+  --shadow-floating: 0 20px 48px rgba(0, 0, 0, 0.7);
+
+  --modal-backdrop: rgba(0, 0, 0, 0.75);
+  --photo-bg: #25262e;
+}
+
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --bg-canvas: #121316;
+    --bg-surface: #1c1d22;
+    --bg-subtle: #25262e;
+    --bg-track: #2c2d36;
+    --bg-input: #25262e;
+    --chip-hover-bg: #32333e;
+
+    --border-subtle: rgba(255, 255, 255, 0.06);
+    --border-default: rgba(255, 255, 255, 0.1);
+
+    --text-primary: #f9fafb;
+    --text-secondary: #b0b8c1;
+    --text-tertiary: #6b7684;
+    --text-disabled: #4e5968;
+    --text-inverse: #191f28;
+
+    --toss-blue: #3182f6;
+    --toss-blue-hover: #4a94fc;
+    --toss-blue-tint: rgba(49, 130, 246, 0.18);
+    --toss-blue-tint-text: #60a5fa;
+
+    --ku-crimson: #f87171;
+    --ku-crimson-tint: rgba(239, 68, 68, 0.18);
+    --ku-crimson-dark: #fca5a5;
+
+    --yu-blue: #38bdf8;
+    --yu-blue-tint: rgba(56, 189, 248, 0.18);
+    --yu-blue-dark: #7dd3fc;
+
+    --success: #10b981;
+    --success-tint: rgba(16, 185, 129, 0.16);
+    --success-border: rgba(16, 185, 129, 0.35);
+    --success-text: #6ee7b7;
+
+    --danger: #f87171;
+    --danger-tint: rgba(248, 113, 113, 0.16);
+    --danger-border: rgba(248, 113, 113, 0.35);
+    --danger-text: #fca5a5;
+
+    --warning: #fbbf24;
+    --warning-tint: rgba(251, 191, 36, 0.16);
+    --warning-border: rgba(251, 191, 36, 0.35);
+    --warning-text: #fde68a;
+
+    --shadow-sm: 0 1px 4px rgba(0, 0, 0, 0.35);
+    --shadow-md: 0 4px 16px rgba(0, 0, 0, 0.45);
+    --shadow-lg: 0 10px 30px rgba(0, 0, 0, 0.55);
+    --shadow-floating: 0 20px 48px rgba(0, 0, 0, 0.7);
+
+    --modal-backdrop: rgba(0, 0, 0, 0.75);
+    --photo-bg: #25262e;
+  }
 }
 
 * {
@@ -83,6 +207,10 @@ body {
   padding: 12px 14px 28px;
   line-height: 1.5;
   -webkit-font-smoothing: antialiased;
+}
+
+body, .selection-card, .quiz-card, .modal-card, .roster-card, .chip, .school-chip, .option-btn, .main-tabs, .main-tab-btn, .final-score-box, .icon-btn, .review-item, .modal-player-profile, .modal-analysis-box {
+  transition: background-color var(--duration-normal) var(--ease-toss), color var(--duration-normal) var(--ease-toss), border-color var(--duration-normal) var(--ease-toss), box-shadow var(--duration-normal) var(--ease-toss);
 }
 
 .app-container {
@@ -142,9 +270,15 @@ body {
   letter-spacing: -0.02em;
 }
 
+.header-controls {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
 .icon-btn {
   background: var(--bg-surface);
-  border: 1px solid rgba(0, 0, 0, 0.06);
+  border: 1px solid var(--border-default);
   color: var(--text-primary);
   border-radius: var(--radius-pill);
   width: 38px;
@@ -159,7 +293,7 @@ body {
 }
 
 .icon-btn:hover {
-  background: #ffffff;
+  background: var(--chip-hover-bg);
   transform: translateY(-1px);
   box-shadow: var(--shadow-md);
 }
@@ -264,7 +398,7 @@ body {
   border-radius: var(--radius-lg);
   padding: 18px 16px;
   box-shadow: var(--shadow-sm);
-  border: 1px solid rgba(0, 0, 0, 0.04);
+  border: 1px solid var(--border-subtle);
 }
 
 .section-label {
@@ -299,7 +433,7 @@ body {
 }
 
 .difficulty-chips .chip:hover {
-  background: #f2f4f6;
+  background: var(--chip-hover-bg);
   color: var(--text-primary);
 }
 
@@ -331,7 +465,7 @@ body {
 }
 
 .chip:hover {
-  background: #f2f4f6;
+  background: var(--chip-hover-bg);
   color: var(--text-primary);
 }
 
@@ -363,7 +497,7 @@ body {
 }
 
 .school-chip:hover {
-  background: #f2f4f6;
+  background: var(--chip-hover-bg);
   color: var(--text-primary);
 }
 
@@ -489,7 +623,7 @@ body {
   border-radius: var(--radius-xl);
   padding: 20px 18px 22px;
   box-shadow: var(--shadow-md);
-  border: 1px solid rgba(0, 0, 0, 0.04);
+  border: 1px solid var(--border-subtle);
   display: flex;
   flex-direction: column;
   gap: 14px;
@@ -526,7 +660,7 @@ body {
   max-height: 290px;
   border-radius: var(--radius-lg);
   overflow: hidden;
-  background: var(--bg-subtle);
+  background: var(--photo-bg);
   border: 1px solid var(--bg-track);
   display: flex;
   align-items: center;
@@ -640,8 +774,8 @@ body {
 }
 
 .option-btn:hover {
-  background: #f2f4f6;
-  border-color: #d1d6db;
+  background: var(--chip-hover-bg);
+  border-color: var(--border-default);
 }
 
 .option-btn:active {
@@ -682,7 +816,7 @@ body {
 
 .answer-form input {
   flex: 1;
-  background: var(--bg-subtle);
+  background: var(--bg-input);
   border: 1.5px solid var(--bg-track);
   border-radius: var(--radius-md);
   padding: 14px 16px;
@@ -694,7 +828,7 @@ body {
 }
 
 .answer-form input:focus {
-  background: #fff;
+  background: var(--bg-surface);
   border-color: var(--toss-blue);
   box-shadow: 0 0 0 3px rgba(49, 130, 246, 0.15);
 }
@@ -783,7 +917,7 @@ body {
   left: 0;
   right: 0;
   bottom: 0;
-  background: rgba(0, 0, 0, 0.45);
+  background: var(--modal-backdrop);
   backdrop-filter: blur(8px);
   -webkit-backdrop-filter: blur(8px);
   z-index: 100;
@@ -859,7 +993,7 @@ body {
   overflow: hidden;
   border: 2.5px solid var(--toss-blue);
   flex-shrink: 0;
-  background: #fff;
+  background: var(--photo-bg);
 }
 
 .modal-photo img {
@@ -949,7 +1083,7 @@ body {
   display: inline-block;
   min-width: 200px;
   box-shadow: var(--shadow-md);
-  border: 1px solid rgba(0, 0, 0, 0.04);
+  border: 1px solid var(--border-subtle);
 }
 
 .score-large {
@@ -1044,7 +1178,7 @@ body {
   object-fit: cover;
   object-position: center top;
   flex-shrink: 0;
-  background: #eee;
+  background: var(--photo-bg);
 }
 
 .review-info {
@@ -1218,7 +1352,7 @@ body {
 
 .roster-card:hover {
   transform: translateY(-2px);
-  border-color: #d1d6db;
+  border-color: var(--border-default);
   box-shadow: var(--shadow-md);
 }
 
@@ -1235,8 +1369,8 @@ body {
   height: 78px;
   border-radius: var(--radius-pill);
   overflow: hidden;
-  background: #f2f4f6;
-  border: 2px solid #fff;
+  background: var(--photo-bg);
+  border: 2px solid var(--bg-surface);
   box-shadow: 0 2px 8px rgba(0, 0, 0, 0.06);
 }
 
