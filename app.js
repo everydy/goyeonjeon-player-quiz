@@ -165,7 +165,9 @@
     tabQuiz.classList.add('active');
     tabStudy.classList.remove('active');
     quizFlowContainer.classList.remove('hidden');
+    quizFlowContainer.hidden = false;
     studyFlowContainer.classList.add('hidden');
+    studyFlowContainer.hidden = true;
     playSound('click');
   });
 
@@ -173,7 +175,9 @@
     tabStudy.classList.add('active');
     tabQuiz.classList.remove('active');
     studyFlowContainer.classList.remove('hidden');
+    studyFlowContainer.hidden = false;
     quizFlowContainer.classList.add('hidden');
+    quizFlowContainer.hidden = true;
     playSound('click');
     renderRoster();
   });
@@ -296,7 +300,7 @@
     // Meta Tags
     const icon = sportIcons[player.sport] || '🏅';
     cardSportTag.textContent = `${icon} ${player.sport}`;
-    cardDiffTag.textContent = selectedDifficulty === 'choice' ? '🟢 4지선다' : '🔴 직접 입력';
+    cardDiffTag.textContent = selectedDifficulty === 'choice' ? '보통' : '어려움';
 
     // Photo
     playerImg.src = player.image;
@@ -314,11 +318,15 @@
     // Render Mode Form
     if (selectedDifficulty === 'choice') {
       optionsContainer.classList.remove('hidden');
+      optionsContainer.hidden = false;
       inputModeContainer.classList.add('hidden');
+      inputModeContainer.hidden = true;
       generateChoiceOptions(player);
     } else {
       optionsContainer.classList.add('hidden');
+      optionsContainer.hidden = true;
       inputModeContainer.classList.remove('hidden');
+      inputModeContainer.hidden = false;
       textAnswerInput.value = '';
       textAnswerInput.disabled = false;
       textSubmitBtn.disabled = false;

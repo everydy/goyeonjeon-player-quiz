@@ -5,9 +5,13 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
   <title>2026 고연전 선수 얼굴 매칭 퀴즈 | KUBS 전력분석</title>
   <meta name="description" content="2026 정기고연전 5개 종목(농구, 야구, 빙구, 럭비, 축구) 194명 전체 선수 얼굴 매칭 퀴즈 (4지선다 / 주관식 직접 입력)">
-  <link rel="stylesheet" href="style.css">
+  <link rel="stylesheet" href="style.css?v=20260925_04">
   <!-- Pretendard Font -->
   <link rel="stylesheet" as="style" crossorigin href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/static/pretendard.min.css" />
+  <style>
+    /* Critical inline reset for tab visibility preventing FOUC */
+    .hidden, [hidden] { display: none !important; }
+  </style>
 </head>
 <body>
   <div class="app-container">
@@ -44,14 +48,8 @@
         <div class="selection-card">
           <label class="section-label">1. 퀴즈 난이도 선택</label>
           <div class="difficulty-chips" id="difficulty-selector">
-            <button class="chip active" data-difficulty="choice">
-              <span class="chip-main">🟢 보통 (4지선다)</span>
-              <span class="chip-sub">이름 4개 중 선택</span>
-            </button>
-            <button class="chip" data-difficulty="input">
-              <span class="chip-main">🔴 어려움 (직접 입력)</span>
-              <span class="chip-sub">선수 이름 직접 타이핑</span>
-            </button>
+            <button class="chip active" data-difficulty="choice">보통</button>
+            <button class="chip" data-difficulty="input">어려움</button>
           </div>
         </div>
 
@@ -116,7 +114,7 @@
         <div class="quiz-card">
           <div class="card-meta">
             <span id="card-sport-tag" class="meta-tag sport-tag">🏀 농구</span>
-            <span id="card-diff-tag" class="meta-tag diff-tag">🟢 4지선다</span>
+            <span id="card-diff-tag" class="meta-tag diff-tag">보통</span>
           </div>
 
           <!-- Player Photo -->
@@ -130,7 +128,7 @@
           </div>
 
           <!-- Hint Box -->
-          <div id="hint-box" class="hint-box hidden">
+          <div id="hint-box" class="hint-box hidden" hidden>
             <div class="hint-item"><span class="hint-label">등번호</span><span id="hint-num">-</span></div>
             <div class="hint-item"><span class="hint-label">포지션/학번</span><span id="hint-pos">-</span></div>
             <div class="hint-item" id="hint-chosung-wrap"><span class="hint-label">초성 힌트</span><span id="hint-chosung" class="chosung-text">-</span></div>
@@ -145,7 +143,7 @@
           </div>
 
           <!-- Mode B: Direct Text Input (Hard Mode) -->
-          <div class="input-mode-container hidden" id="input-mode-container">
+          <div class="input-mode-container hidden" id="input-mode-container" hidden>
             <form id="text-answer-form" class="answer-form">
               <div class="input-row">
                 <input id="text-answer-input" type="text" placeholder="선수 이름 입력" autocomplete="off" autocapitalize="off" spellcheck="false" required>
@@ -165,7 +163,7 @@
       </section>
 
       <!-- Answer Explanation Modal -->
-      <div id="modal-overlay" class="modal-overlay hidden">
+      <div id="modal-overlay" class="modal-overlay hidden" hidden>
         <div class="modal-card">
           <div id="modal-result-banner" class="result-banner correct">
             <span class="result-icon">⭕</span>
@@ -227,7 +225,7 @@
     </main>
 
     <!-- ==================== VIEW 2: STUDY / ROSTER ==================== -->
-    <main id="study-flow-container" class="hidden">
+    <main id="study-flow-container" class="hidden" hidden>
       <div class="study-header">
         <h2>📖 2026 고연전 선수 도감</h2>
         <p>얼굴과 이름을 미리 익히고 퀴즈에 도전해보세요!</p>
@@ -264,8 +262,8 @@
   </div>
 
   <!-- Player Database (194 players) -->
-  <script src="data/players.js"></script>
+  <script src="data/players.js?v=20260925_04"></script>
   <!-- Main Application Logic -->
-  <script src="app.js"></script>
+  <script src="app.js?v=20260925_04"></script>
 </body>
 </html>
