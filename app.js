@@ -1,12 +1,18 @@
-// 2026 고연전 선수 얼굴 매칭 퀴즈 App Logic
+// 2026 고연전 194명 선수 얼굴 매칭 퀴즈 App Logic
 (function() {
   // Elements
+  const tabQuiz = document.getElementById('tab-quiz');
+  const tabStudy = document.getElementById('tab-study');
+  const quizFlowContainer = document.getElementById('quiz-flow-container');
+  const studyFlowContainer = document.getElementById('study-flow-container');
+
   const startScreen = document.getElementById('start-screen');
   const quizScreen = document.getElementById('quiz-screen');
   const resultScreen = document.getElementById('result-screen');
   const modalOverlay = document.getElementById('modal-overlay');
 
-  // Selectors
+  // Filter Selectors (Quiz Start)
+  const difficultySelector = document.getElementById('difficulty-selector');
   const sportSelector = document.getElementById('sport-selector');
   const schoolSelector = document.getElementById('school-selector');
   const countSelector = document.getElementById('count-selector');
@@ -19,14 +25,26 @@
   const progressBarFill = document.getElementById('progress-bar-fill');
   const comboBadge = document.getElementById('combo-badge');
   const cardSportTag = document.getElementById('card-sport-tag');
-  const cardSchoolTag = document.getElementById('card-school-tag');
+  const cardDiffTag = document.getElementById('card-diff-tag');
   const playerImg = document.getElementById('player-img');
+
+  // Hints
   const hintBtn = document.getElementById('hint-btn');
   const hintBox = document.getElementById('hint-box');
-  const hintPos = document.getElementById('hint-pos');
   const hintNum = document.getElementById('hint-num');
+  const hintPos = document.getElementById('hint-pos');
+  const hintChosungWrap = document.getElementById('hint-chosung-wrap');
+  const hintChosung = document.getElementById('hint-chosung');
   const hintText = document.getElementById('hint-text');
+
+  // Mode Containers
   const optionsContainer = document.getElementById('options-container');
+  const inputModeContainer = document.getElementById('input-mode-container');
+  const textAnswerForm = document.getElementById('text-answer-form');
+  const textAnswerInput = document.getElementById('text-answer-input');
+  const textSubmitBtn = document.getElementById('text-submit-btn');
+  const showChosungBtn = document.getElementById('show-chosung-btn');
+  const skipQuestionBtn = document.getElementById('skip-question-btn');
   const giveUpBtn = document.getElementById('give-up-btn');
 
   // Modal Elements
@@ -42,13 +60,25 @@
   const resultTitle = document.getElementById('result-title');
   const finalScoreDisplay = document.getElementById('final-score-display');
   const finalAccuracyDisplay = document.getElementById('final-accuracy-display');
+  const reviewTabAll = document.getElementById('review-tab-all');
+  const reviewTabSkipped = document.getElementById('review-tab-skipped');
+  const countAllSolved = document.getElementById('count-all-solved');
+  const countSkipped = document.getElementById('count-skipped');
   const reviewListContainer = document.getElementById('review-list-container');
   const retryBtn = document.getElementById('retry-btn');
   const changeModeBtn = document.getElementById('change-mode-btn');
   const shareBtn = document.getElementById('share-btn');
 
-  // State
+  // Study View Elements
+  const studySearchInput = document.getElementById('study-search-input');
+  const studySportFilter = document.getElementById('study-sport-filter');
+  const studySchoolFilter = document.getElementById('study-school-filter');
+  const studyCountInfo = document.getElementById('study-count-info');
+  const rosterGridContainer = document.getElementById('roster-grid-container');
+
+  // App State
   let soundEnabled = true;
+  let selectedDifficulty = 'choice'; // 'choice' or 'input'
   let selectedSport = 'all';
   let selectedSchool = 'all';
   let selectedCount = 10;
@@ -57,10 +87,22 @@
   let currentIndex = 0;
   let score = 0;
   let currentCombo = 0;
-  let userAnswers = []; // { player, chosenName, isCorrect }
+  let userAnswers = []; // { player, chosenName, isCorrect, isSkipped }
+  let skippedPlayers = [];
   let isAnswerLocked = false;
+  let currentReviewTab = 'all';
 
-  // Web Audio Synth for crisp sound effects without external audio files
+  // Sport icons
+  const sportIcons = {
+    '농구': '🏀',
+    '야구': '⚾',
+    '아이스하키': '🏒',
+    '빙구': '🏒',
+    '럭비': '🏉',
+    '축구': '⚽'
+  };
+
+  // Web Audio Synthesizer
   let audioCtx = null;
   function getAudioContext() {
     if (!audioCtx) {
@@ -85,7 +127,6 @@
 
       const now = ctx.currentTime;
       if (type === 'correct') {
-        // Cheerful chord
         osc.type = 'triangle';
         osc.frequency.setValueAtTime(523.25, now); // C5
         osc.frequency.exponentialRampToValueAtTime(783.99, now + 0.15); // G5
@@ -94,7 +135,6 @@
         osc.start(now);
         osc.stop(now + 0.35);
       } else if (type === 'wrong') {
-        // Low double buzz
         osc.type = 'sawtooth';
         osc.frequency.setValueAtTime(160, now);
         osc.frequency.linearRampToValueAtTime(110, now + 0.25);
@@ -110,9 +150,7 @@
         osc.start(now);
         osc.stop(now + 0.08);
       }
-    } catch (e) {
-      // Audio fallback fail silently
-    }
+    } catch (e) {}
   }
 
   function triggerHaptic(type) {
@@ -122,16 +160,34 @@
     }
   }
 
-  // Sport icons mapping
-  const sportIcons = {
-    '농구': '🏀',
-    '야구': '⚾',
-    '빙구': '🏒',
-    '럭비': '🏉',
-    '축구': '⚽'
-  };
+  // Tab Switching
+  tabQuiz.addEventListener('click', () => {
+    tabQuiz.classList.add('active');
+    tabStudy.classList.remove('active');
+    quizFlowContainer.classList.remove('hidden');
+    studyFlowContainer.classList.add('hidden');
+    playSound('click');
+  });
 
-  // Setup Event Listeners for Filters
+  tabStudy.addEventListener('click', () => {
+    tabStudy.classList.add('active');
+    tabQuiz.classList.remove('active');
+    studyFlowContainer.classList.remove('hidden');
+    quizFlowContainer.classList.add('hidden');
+    playSound('click');
+    renderRoster();
+  });
+
+  // Filter Selectors Setup
+  difficultySelector.addEventListener('click', (e) => {
+    const chip = e.target.closest('.chip');
+    if (!chip) return;
+    difficultySelector.querySelectorAll('.chip').forEach(c => c.classList.remove('active'));
+    chip.classList.add('active');
+    selectedDifficulty = chip.dataset.difficulty;
+    playSound('click');
+  });
+
   sportSelector.addEventListener('click', (e) => {
     const chip = e.target.closest('.chip');
     if (!chip) return;
@@ -179,15 +235,13 @@
       return;
     }
 
-    // Filter players based on selected sport and school
     let pool = allPlayers.filter(p => {
       const matchSport = (selectedSport === 'all') || (p.sport === selectedSport);
       const matchSchool = (selectedSchool === 'all') || (p.school === selectedSchool);
       return matchSport && matchSchool;
     });
 
-    if (pool.length < 4) {
-      // If pool is too small, relax school filter
+    if (pool.length < 4 && selectedDifficulty === 'choice') {
       pool = allPlayers.filter(p => selectedSport === 'all' || p.sport === selectedSport);
     }
 
@@ -196,10 +250,8 @@
       return;
     }
 
-    // Shuffle pool
     const shuffled = [...pool].sort(() => Math.random() - 0.5);
 
-    // Limit count
     let totalQuestions = shuffled.length;
     if (selectedCount !== 'all') {
       const limit = parseInt(selectedCount, 10);
@@ -211,8 +263,8 @@
     score = 0;
     currentCombo = 0;
     userAnswers = [];
+    skippedPlayers = [];
 
-    // Switch screen
     startScreen.classList.remove('active');
     resultScreen.classList.remove('active');
     quizScreen.classList.add('active');
@@ -228,12 +280,12 @@
     const player = quizQuestions[currentIndex];
     const total = quizQuestions.length;
 
-    // Update status bar
+    // Status bar
     questionIndexText.textContent = `Q ${currentIndex + 1} / ${total}`;
     scoreCounterText.textContent = `점수: ${score}`;
     progressBarFill.style.width = `${((currentIndex) / total) * 100}%`;
 
-    // Combo badge
+    // Combo
     if (currentCombo >= 2) {
       comboBadge.textContent = `🔥 ${currentCombo}연속 정답!`;
       comboBadge.classList.remove('hidden');
@@ -241,39 +293,49 @@
       comboBadge.classList.add('hidden');
     }
 
-    // Card Meta
+    // Meta Tags
     const icon = sportIcons[player.sport] || '🏅';
     cardSportTag.textContent = `${icon} ${player.sport}`;
-    cardSchoolTag.textContent = player.school;
-    cardSchoolTag.className = `meta-tag school-tag ${player.school === '고려대학교' ? 'ku' : 'yu'}`;
+    cardDiffTag.textContent = selectedDifficulty === 'choice' ? '🟢 4지선다' : '🔴 직접 입력';
 
     // Photo
     playerImg.src = player.image;
     playerImg.alt = `${player.school} ${player.sport} 선수`;
 
     // Hints
-    hintPos.textContent = `${player.position || '-'} · ${player.grade || '-'}`;
-    hintNum.textContent = player.number !== '-' ? player.number : '배번 미기재';
-    const sampleTip = (player.highlights && player.highlights.length) 
+    hintNum.textContent = (player.number && player.number !== '-') ? `${player.number}번` : '미기재';
+    hintPos.textContent = `${player.position || '선수'}${player.grade ? ' · ' + player.grade : ''}`;
+    hintChosung.textContent = player.chosung || '-';
+    const sampleTip = (player.highlights && player.highlights.length)
       ? player.highlights[Math.floor(Math.random() * player.highlights.length)]
-      : '전력분석 핵심 전력';
+      : '2026 고연전 공식 엔트리';
     hintText.textContent = sampleTip;
 
-    // Build 4 Options
-    generateOptions(player);
+    // Render Mode Form
+    if (selectedDifficulty === 'choice') {
+      optionsContainer.classList.remove('hidden');
+      inputModeContainer.classList.add('hidden');
+      generateChoiceOptions(player);
+    } else {
+      optionsContainer.classList.add('hidden');
+      inputModeContainer.classList.remove('hidden');
+      textAnswerInput.value = '';
+      textAnswerInput.disabled = false;
+      textSubmitBtn.disabled = false;
+      setTimeout(() => textAnswerInput.focus(), 150);
+    }
   }
 
-  function generateOptions(targetPlayer) {
+  // 4 Multiple Choice (Names ONLY - No school tags!)
+  function generateChoiceOptions(targetPlayer) {
     const allPlayers = window.GOYEONJEON_PLAYERS || [];
     
-    // Pick 3 distractors
-    // Priority: same sport first
+    // Pick 3 distractors: prefer same sport
     let candidates = allPlayers.filter(p => p.name !== targetPlayer.name && p.sport === targetPlayer.sport);
     if (candidates.length < 3) {
       candidates = allPlayers.filter(p => p.name !== targetPlayer.name);
     }
 
-    // Shuffle candidates and pick 3
     const distractors = [...candidates].sort(() => Math.random() - 0.5).slice(0, 3);
     const options = [targetPlayer, ...distractors].sort(() => Math.random() - 0.5);
 
@@ -281,16 +343,14 @@
     options.forEach(opt => {
       const btn = document.createElement('button');
       btn.className = 'option-btn';
-      btn.innerHTML = `
-        <span class="option-name">${opt.name}</span>
-        <span class="option-school">${opt.school}</span>
-      `;
-      btn.addEventListener('click', () => handleOptionClick(btn, opt, targetPlayer));
+      // Only the player's name is displayed!
+      btn.textContent = opt.name;
+      btn.addEventListener('click', () => handleChoiceSubmit(btn, opt, targetPlayer));
       optionsContainer.appendChild(btn);
     });
   }
 
-  function handleOptionClick(clickedBtn, selectedPlayer, targetPlayer) {
+  function handleChoiceSubmit(clickedBtn, selectedPlayer, targetPlayer) {
     if (isAnswerLocked) return;
     isAnswerLocked = true;
 
@@ -308,10 +368,9 @@
       playSound('wrong');
       triggerHaptic('wrong');
 
-      // Highlight the correct answer button
       const allBtns = optionsContainer.querySelectorAll('.option-btn');
       allBtns.forEach(btn => {
-        if (btn.querySelector('.option-name').textContent.trim() === targetPlayer.name) {
+        if (btn.textContent.trim() === targetPlayer.name) {
           btn.classList.add('correct');
         }
       });
@@ -320,29 +379,120 @@
     userAnswers.push({
       player: targetPlayer,
       chosenName: selectedPlayer.name,
-      isCorrect: isCorrect
+      isCorrect: isCorrect,
+      isSkipped: false
     });
 
-    // Show explanation modal after 450ms
     setTimeout(() => {
-      showModal(targetPlayer, isCorrect);
+      showModal(targetPlayer, isCorrect, false);
     }, 450);
   }
 
-  function showModal(player, isCorrect) {
-    modalResultBanner.className = `result-banner ${isCorrect ? 'correct' : 'wrong'}`;
-    modalResultBanner.querySelector('.result-icon').textContent = isCorrect ? '⭕' : '❌';
-    modalResultBanner.querySelector('.result-title').textContent = isCorrect 
-      ? '정답입니다!' 
-      : `아쉬워요! 정답은 ${player.name} 선수입니다.`;
+  // Direct Text Input Submit (Hard Mode)
+  textAnswerForm.addEventListener('submit', (e) => {
+    e.preventDefault();
+    if (isAnswerLocked) return;
+    const targetPlayer = quizQuestions[currentIndex];
+    const userVal = textAnswerInput.value.normalize('NFC').replace(/\s/g, '').toLowerCase();
+    if (!userVal) {
+      textAnswerInput.focus();
+      return;
+    }
+
+    isAnswerLocked = true;
+    textAnswerInput.disabled = true;
+    textSubmitBtn.disabled = true;
+
+    const targetVal = targetPlayer.name.normalize('NFC').replace(/\s/g, '').toLowerCase();
+    const isCorrect = (userVal === targetVal);
+
+    if (isCorrect) {
+      score += 15; // Extra points for hard mode!
+      currentCombo++;
+      textAnswerInput.style.borderColor = '#3fb950';
+      playSound('correct');
+      triggerHaptic('correct');
+    } else {
+      currentCombo = 0;
+      textAnswerInput.style.borderColor = '#f85149';
+      playSound('wrong');
+      triggerHaptic('wrong');
+    }
+
+    userAnswers.push({
+      player: targetPlayer,
+      chosenName: textAnswerInput.value.trim(),
+      isCorrect: isCorrect,
+      isSkipped: false
+    });
+
+    setTimeout(() => {
+      textAnswerInput.style.borderColor = '';
+      showModal(targetPlayer, isCorrect, false);
+    }, 450);
+  });
+
+  // Skip question
+  skipQuestionBtn.addEventListener('click', () => {
+    if (isAnswerLocked) return;
+    const targetPlayer = quizQuestions[currentIndex];
+    currentCombo = 0;
+    userAnswers.push({
+      player: targetPlayer,
+      chosenName: '(건너뜀)',
+      isCorrect: false,
+      isSkipped: true
+    });
+    skippedPlayers.push(targetPlayer);
+
+    showModal(targetPlayer, false, true);
+  });
+
+  // Show Chosung button in hard mode
+  showChosungBtn.addEventListener('click', () => {
+    hintBox.classList.remove('hidden');
+    hintBtn.textContent = '💡 힌트 접기';
+    playSound('click');
+  });
+
+  // Hint Toggle
+  hintBtn.addEventListener('click', () => {
+    const isHidden = hintBox.classList.contains('hidden');
+    if (isHidden) {
+      hintBox.classList.remove('hidden');
+      hintBtn.textContent = '💡 힌트 접기';
+    } else {
+      hintBox.classList.add('hidden');
+      hintBtn.textContent = '💡 힌트 보기';
+    }
+    playSound('click');
+  });
+
+  // Explanation Modal
+  function showModal(player, isCorrect, isSkipped) {
+    if (isSkipped) {
+      modalResultBanner.className = 'result-banner skipped';
+      modalResultBanner.querySelector('.result-icon').textContent = '⏩';
+      modalResultBanner.querySelector('.result-title').textContent = `건너뜀: 이 선수는 ${player.name} 선수입니다.`;
+    } else if (isCorrect) {
+      modalResultBanner.className = 'result-banner correct';
+      modalResultBanner.querySelector('.result-icon').textContent = '⭕';
+      modalResultBanner.querySelector('.result-title').textContent = '정답입니다!';
+    } else {
+      modalResultBanner.className = 'result-banner wrong';
+      modalResultBanner.querySelector('.result-icon').textContent = '❌';
+      modalResultBanner.querySelector('.result-title').textContent = `아쉬워요! 정답은 ${player.name} 선수입니다.`;
+    }
 
     modalPlayerImg.src = player.image;
     modalSchoolBadge.textContent = `${player.school} · ${player.sport}`;
-    modalSchoolBadge.style.color = player.school === '고려대학교' ? '#ff6b81' : '#60a5fa';
+    modalSchoolBadge.style.color = player.school === '고려대' ? '#ff6b81' : '#60a5fa';
     modalName.textContent = player.name;
-    
-    const numStr = player.number !== '-' ? ` · 등번호 ${player.number}` : '';
-    modalDetails.textContent = `포지션: ${player.position || '-'} · ${player.grade || '-'}${numStr}`;
+
+    const numStr = (player.number && player.number !== '-') ? `등번호 ${player.number}번` : '등번호 미기재';
+    const posStr = player.position ? ` · ${player.position}` : '';
+    const gradeStr = player.grade ? ` · ${player.grade}` : '';
+    modalDetails.textContent = `${numStr}${posStr}${gradeStr}`;
 
     modalHighlightsList.innerHTML = '';
     if (player.highlights && player.highlights.length) {
@@ -351,10 +501,6 @@
         li.textContent = h;
         modalHighlightsList.appendChild(li);
       });
-    } else {
-      const li = document.createElement('li');
-      li.textContent = '2026 고연전 주요 핵심 전력';
-      modalHighlightsList.appendChild(li);
     }
 
     const isLast = (currentIndex === quizQuestions.length - 1);
@@ -373,19 +519,6 @@
     }
   });
 
-  // Hint toggle
-  hintBtn.addEventListener('click', () => {
-    const isHidden = hintBox.classList.contains('hidden');
-    if (isHidden) {
-      hintBox.classList.remove('hidden');
-      hintBtn.textContent = '💡 힌트 접기';
-    } else {
-      hintBox.classList.add('hidden');
-      hintBtn.textContent = '💡 힌트 보기';
-    }
-    playSound('click');
-  });
-
   // Give Up
   giveUpBtn.addEventListener('click', () => {
     if (confirm('현재 진행 상황을 마무리하고 결과를 확인할까요?')) {
@@ -393,7 +526,7 @@
     }
   });
 
-  // Results View
+  // Results Screen
   function showResults() {
     quizScreen.classList.remove('active');
     modalOverlay.classList.add('hidden');
@@ -407,33 +540,72 @@
     finalAccuracyDisplay.textContent = `정답률 ${accuracy}% (총점: ${score}점)`;
 
     if (accuracy === 100) {
-      resultTitle.textContent = '🏆 완벽합니다! 전력분석 마스터!';
+      resultTitle.textContent = '🏆 완벽합니다! 2026 고연전 마스터!';
     } else if (accuracy >= 80) {
-      resultTitle.textContent = '👏 대단해요! 고연전 준전문가!';
+      resultTitle.textContent = '👏 대단해요! 고연전 준전문가 수준!';
     } else if (accuracy >= 50) {
       resultTitle.textContent = '👍 좋은 성적입니다! 조금만 더 복습해봐요!';
     } else {
-      resultTitle.textContent = '💪 아직 낯선 얼굴들이 있죠? 다시 도전해보세요!';
+      resultTitle.textContent = '💪 아직 낯선 얼굴들이 있죠? 도감에서 확인해보세요!';
     }
 
-    // Populate review list
+    countAllSolved.textContent = userAnswers.length;
+    countSkipped.textContent = skippedPlayers.length;
+
+    currentReviewTab = 'all';
+    reviewTabAll.classList.add('active');
+    reviewTabSkipped.classList.remove('active');
+    renderReviewList();
+  }
+
+  function renderReviewList() {
     reviewListContainer.innerHTML = '';
-    userAnswers.forEach(ans => {
+    const listToRender = (currentReviewTab === 'all') 
+      ? userAnswers 
+      : userAnswers.filter(a => a.isSkipped);
+
+    if (!listToRender.length) {
+      reviewListContainer.innerHTML = '<div style="text-align:center; padding:20px; color:var(--text-muted); font-size:0.85rem;">해당하는 선수가 없습니다.</div>';
+      return;
+    }
+
+    listToRender.forEach(ans => {
       const p = ans.player;
       const item = document.createElement('div');
-      item.className = `review-item ${ans.isCorrect ? 'was-correct' : 'was-wrong'}`;
+      let statusClass = ans.isSkipped ? 'was-skipped' : (ans.isCorrect ? 'was-correct' : 'was-wrong');
+      let statusIcon = ans.isSkipped ? '⏩' : (ans.isCorrect ? '✅' : '❌');
+
+      item.className = `review-item ${statusClass}`;
       item.innerHTML = `
         <img class="review-thumb" src="${p.image}" alt="${p.name}">
         <div class="review-info">
-          <div class="review-name">${p.name} ${ans.isCorrect ? '✅' : '❌'}</div>
-          <div class="review-sub">${p.school} · ${p.sport} · ${p.position || '-'}</div>
+          <div class="review-name">${p.name} ${statusIcon}</div>
+          <div class="review-sub">${p.school} · ${p.sport} · ${p.number !== '-' ? '등번호 ' + p.number + '번' : ''}</div>
         </div>
       `;
+      // Clicking review item opens the player modal
+      item.addEventListener('click', () => {
+        showModal(p, ans.isCorrect, ans.isSkipped);
+        modalNextBtn.querySelector('span:first-child').textContent = '닫기';
+      });
       reviewListContainer.appendChild(item);
     });
   }
 
-  // Result Action Handlers
+  reviewTabAll.addEventListener('click', () => {
+    currentReviewTab = 'all';
+    reviewTabAll.classList.add('active');
+    reviewTabSkipped.classList.remove('active');
+    renderReviewList();
+  });
+
+  reviewTabSkipped.addEventListener('click', () => {
+    currentReviewTab = 'skipped';
+    reviewTabSkipped.classList.add('active');
+    reviewTabAll.classList.remove('active');
+    renderReviewList();
+  });
+
   retryBtn.addEventListener('click', () => {
     playSound('click');
     startQuiz();
@@ -449,11 +621,57 @@
     playSound('click');
     if (navigator.clipboard) {
       navigator.clipboard.writeText(window.location.href).then(() => {
-        alert('퀴즈 페이지 링크가 클립보드에 복사되었습니다! 친구들에게 공유해보세요.');
+        alert('퀴즈 페이지 링크가 복사되었습니다!');
       });
     } else {
-      alert(`링크 주소: ${window.location.href}`);
+      alert(`링크: ${window.location.href}`);
     }
   });
+
+  // ==================== STUDY / ROSTER LOGIC ====================
+  function renderRoster() {
+    const allPlayers = window.GOYEONJEON_PLAYERS || [];
+    const query = studySearchInput.value.trim().toLowerCase();
+    const sportFilter = studySportFilter.value;
+    const schoolFilter = studySchoolFilter.value;
+
+    const filtered = allPlayers.filter(p => {
+      const matchSport = (sportFilter === 'all') || (p.sport === sportFilter);
+      const matchSchool = (schoolFilter === 'all') || (p.school === schoolFilter);
+      const matchQuery = !query || 
+        p.name.toLowerCase().includes(query) || 
+        (p.number && p.number.includes(query)) ||
+        (p.position && p.position.toLowerCase().includes(query));
+      return matchSport && matchSchool && matchQuery;
+    });
+
+    studyCountInfo.textContent = `전체 ${allPlayers.length}명 중 ${filtered.length}명 표시`;
+
+    rosterGridContainer.innerHTML = '';
+    filtered.forEach(p => {
+      const card = document.createElement('article');
+      card.className = `roster-card ${p.school === '고려대' ? 'ku' : 'yu'}`;
+      card.innerHTML = `
+        <div class="roster-photo">
+          <img src="${p.image}" alt="${p.name}" loading="lazy">
+        </div>
+        <div class="roster-name">${p.name}</div>
+        <div class="roster-meta">${p.school} · ${p.sport}</div>
+        <div class="roster-meta roster-num">${p.number !== '-' ? 'No.' + p.number : ''} ${p.position || ''}</div>
+      `;
+      card.addEventListener('click', () => {
+        showModal(p, true, false);
+        modalResultBanner.className = 'result-banner correct';
+        modalResultBanner.querySelector('.result-icon').textContent = '📋';
+        modalResultBanner.querySelector('.result-title').textContent = `${p.school} ${p.name} 선수`;
+        modalNextBtn.querySelector('span:first-child').textContent = '닫기';
+      });
+      rosterGridContainer.appendChild(card);
+    });
+  }
+
+  studySearchInput.addEventListener('input', renderRoster);
+  studySportFilter.addEventListener('change', renderRoster);
+  studySchoolFilter.addEventListener('change', renderRoster);
 
 })();
