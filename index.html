@@ -5,7 +5,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
   <title>2026 고연전 선수 얼굴 매칭 퀴즈 | KUBS 전력분석</title>
   <meta name="description" content="2026 정기고연전 5개 종목(농구, 야구, 빙구, 럭비, 축구) 194명 전체 선수 얼굴 매칭 퀴즈 (4지선다 / 주관식 직접 입력)">
-  <link rel="stylesheet" href="style.css?v=20260925_brag_01">
+  <link rel="stylesheet" href="style.css?v=20260925_filter_01">
   <!-- Pretendard Font -->
   <link rel="stylesheet" as="style" crossorigin href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/static/pretendard.min.css" />
   <script>
@@ -25,25 +25,17 @@
 </head>
 <body>
   <div class="app-container">
-    <!-- Top Bar -->
+    <!-- Top Bar: Integrated Segmented Tabs & Controls -->
     <header class="app-header">
-      <div class="brand-title">
-        <span class="badge ku-badge">KU</span>
-        <span class="vs-text">VS</span>
-        <span class="badge yu-badge">YU</span>
-        <span class="title-text">2026 선수 얼굴 퀴즈</span>
-      </div>
+      <nav class="main-tabs" aria-label="메인 모드">
+        <button id="tab-quiz" class="main-tab-btn active">🎮 퀴즈 풀기</button>
+        <button id="tab-study" class="main-tab-btn">📖 선수 명단 익히기</button>
+      </nav>
       <div class="header-controls">
         <button id="theme-toggle-btn" class="icon-btn" title="다크 모드 / 라이트 모드 전환" aria-label="테마 전환">🌙</button>
         <button id="sound-toggle-btn" class="icon-btn" title="소리 켜기/끄기" aria-label="소리 설정">🔊</button>
       </div>
     </header>
-
-    <!-- Main Navigation: Quiz vs Study Roster -->
-    <nav class="main-tabs" aria-label="메인 모드">
-      <button id="tab-quiz" class="main-tab-btn active">🎮 퀴즈 풀기</button>
-      <button id="tab-study" class="main-tab-btn">📖 선수 명단 익히기</button>
-    </nav>
 
     <!-- ==================== VIEW 1: QUIZ FLOW ==================== -->
     <main id="quiz-flow-container">
@@ -55,18 +47,44 @@
           <p class="hero-desc">5개 전 종목(농구, 야구, 빙구, 럭비, 축구) 194명의 얼굴과 전력분석 정보를 완벽하게 암기해보세요!</p>
         </div>
 
-        <!-- 1. Difficulty Mode Selection -->
-        <div class="selection-card">
-          <label class="section-label">1. 퀴즈 난이도 선택</label>
-          <div class="difficulty-chips" id="difficulty-selector">
-            <button class="chip active" data-difficulty="choice">보통</button>
-            <button class="chip" data-difficulty="input">어려움</button>
+        <!-- Quiz Type Selection (Toss 2-Column Mode Cards) -->
+        <div class="selection-card mode-select-card">
+          <div class="section-header-row">
+            <label class="section-label">어떤 퀴즈를 풀까요?</label>
+            <span class="section-sub-badge">모드 선택</span>
+          </div>
+          <div class="mode-cards-grid" id="quiz-type-selector">
+            <button class="mode-card-btn active" data-type="face" type="button">
+              <div class="mode-card-top">
+                <span class="mode-card-icon">👤</span>
+                <span class="mode-card-check">✓</span>
+              </div>
+              <div class="mode-card-title">얼굴 퀴즈</div>
+              <div class="mode-card-desc">사진 보고 이름 맞히기</div>
+            </button>
+            <button class="mode-card-btn" data-type="number" type="button">
+              <div class="mode-card-top">
+                <span class="mode-card-icon">🔢</span>
+                <span class="mode-card-check">✓</span>
+              </div>
+              <div class="mode-card-title">등번호 퀴즈</div>
+              <div class="mode-card-desc">유니폼 번호로 맞히기</div>
+            </button>
           </div>
         </div>
 
-        <!-- 2. Sport Selection -->
+        <!-- Difficulty Mode Selection -->
         <div class="selection-card">
-          <label class="section-label">2. 종목 선택</label>
+          <label class="section-label">난이도</label>
+          <div class="difficulty-chips" id="difficulty-selector">
+            <button class="chip active" data-difficulty="choice">보통 (4지선다)</button>
+            <button class="chip" data-difficulty="input">어려움 (직접 입력)</button>
+          </div>
+        </div>
+
+        <!-- Sport Selection -->
+        <div class="selection-card">
+          <label class="section-label">종목 선택</label>
           <div class="sport-chips" id="sport-selector">
             <button class="chip active" data-sport="all">🏆 전체 (194명)</button>
             <button class="chip" data-sport="야구">⚾ 야구 (43명)</button>
@@ -77,9 +95,9 @@
           </div>
         </div>
 
-        <!-- 3. School Selection -->
+        <!-- School Selection -->
         <div class="selection-card">
-          <label class="section-label">3. 학교 필터</label>
+          <label class="section-label">학교 필터</label>
           <div class="school-chips" id="school-selector">
             <button class="school-chip active" data-school="all">양교 전체 (고대+연대)</button>
             <button class="school-chip ku" data-school="고려대">🔴 고려대만</button>
@@ -87,9 +105,9 @@
           </div>
         </div>
 
-        <!-- 4. Question Count -->
+        <!-- Question Count -->
         <div class="selection-card">
-          <label class="section-label">4. 문제 수</label>
+          <label class="section-label">문제 수</label>
           <div class="count-chips" id="count-selector">
             <button class="chip active" data-count="10">10문제</button>
             <button class="chip" data-count="20">20문제</button>
@@ -128,13 +146,31 @@
             <span id="card-diff-tag" class="meta-tag diff-tag">보통</span>
           </div>
 
-          <!-- Player Photo -->
-          <div class="player-photo-wrapper">
+          <!-- Mode 1: Player Photo Wrapper (얼굴 보고 맞히기) -->
+          <div class="player-photo-wrapper" id="player-photo-wrapper">
             <div class="photo-frame">
               <img id="player-img" src="" alt="선수 얼굴 사진" loading="eager">
             </div>
             <div class="photo-overlay-hint">
               <button id="hint-btn" class="hint-btn">💡 힌트 보기</button>
+            </div>
+          </div>
+
+          <!-- Mode 2: Jersey Number Card (등번호 보고 맞히기) -->
+          <div class="jersey-card-wrapper hidden" id="jersey-card-wrapper" hidden>
+            <div class="jersey-card" id="jersey-card">
+              <div class="jersey-school-badge" id="jersey-school-badge">🔴 고려대학교</div>
+              <div class="jersey-num-row">
+                <span class="jersey-num-prefix">No.</span>
+                <span class="jersey-num-val" id="jersey-num-val">18</span>
+              </div>
+              <div class="jersey-meta-tags">
+                <span class="jersey-meta-pill" id="jersey-sport-pill">🏀 농구</span>
+                <span class="jersey-meta-pill" id="jersey-pos-pill">F</span>
+              </div>
+            </div>
+            <div class="jersey-overlay-hint">
+              <button id="jersey-hint-btn" class="hint-btn">💡 힌트 보기</button>
             </div>
           </div>
 
@@ -146,7 +182,7 @@
             <div class="hint-item"><span class="hint-label">특징 힌트</span><span id="hint-text">-</span></div>
           </div>
 
-          <div class="quiz-question-title">이 선수의 이름은?</div>
+          <div class="quiz-question-title" id="quiz-question-title">이 선수의 이름은?</div>
 
           <!-- Mode A: 4 Multiple Choice Options (Only Names, No School Tag) -->
           <div class="options-grid" id="options-container">
@@ -172,62 +208,6 @@
           <button id="give-up-btn" class="text-btn">종료하고 결과 보기</button>
         </div>
       </section>
-
-      <!-- Answer Explanation Modal -->
-      <div id="modal-overlay" class="modal-overlay hidden" hidden>
-        <div class="modal-card">
-          <div id="modal-result-banner" class="result-banner correct">
-            <span class="result-icon">⭕</span>
-            <span class="result-title">정답입니다!</span>
-          </div>
-
-          <div class="modal-player-profile">
-            <div class="modal-photo">
-              <img id="modal-player-img" src="" alt="선수">
-            </div>
-            <div class="modal-info">
-              <div class="modal-school-badge" id="modal-school-badge">고려대 · 농구</div>
-              <h3 class="modal-name" id="modal-name">이동근</h3>
-              <p class="modal-details" id="modal-details">등번호 18번 · F</p>
-            </div>
-          </div>
-
-          <div class="modal-analysis-box">
-            <div class="analysis-title">📊 선수 정보 및 전력분석</div>
-            <ul id="modal-highlights-list" class="analysis-list">
-              <!-- Populated by JS -->
-            </ul>
-          </div>
-
-          <button id="modal-next-btn" class="primary-btn modal-btn">
-            <span>다음 문제 풀기</span>
-            <span class="btn-arrow">➔</span>
-          </button>
-        </div>
-      </div>
-
-      <!-- Brag Score Image Preview Modal -->
-      <div id="brag-modal-overlay" class="modal-overlay hidden" hidden>
-        <div class="modal-card brag-modal-card">
-          <div class="brag-modal-header">
-            <h3 class="brag-modal-title">📸 내 점수 카드</h3>
-            <button id="brag-modal-close-icon" class="icon-btn-close" aria-label="닫기">✕</button>
-          </div>
-          <div class="brag-image-wrapper">
-            <img id="brag-preview-img" src="" alt="내 점수 카드 미리보기">
-          </div>
-          <div class="brag-modal-actions">
-            <button id="brag-download-btn" class="primary-btn">
-              <span>💾 이미지 저장하기 (다운로드)</span>
-            </button>
-            <button id="brag-share-native-btn" class="secondary-btn">
-              <span>📤 SNS / 카카오톡 공유하기</span>
-            </button>
-          </div>
-        </div>
-      </div>
-      <!-- Hidden Canvas for High-Resolution Card Generation -->
-      <canvas id="brag-canvas" width="800" height="1000" style="display:none;"></canvas>
 
       <!-- Screen 1-C: Quiz Results -->
       <section id="result-screen" class="screen">
@@ -271,27 +251,34 @@
         <p>얼굴과 이름을 미리 익히고 퀴즈에 도전해보세요!</p>
       </div>
 
-      <!-- Study Filter Controls -->
+      <!-- Study Filter Controls (Toss Filter Chips) -->
       <div class="study-controls">
         <div class="study-search-wrap">
-          <input type="text" id="study-search-input" placeholder="선수 이름 또는 등번호 검색..." autocomplete="off">
+          <input type="text" id="study-search-input" placeholder="🔍 선수 이름 또는 등번호 검색..." autocomplete="off">
         </div>
-        <div class="study-filter-row">
-          <select id="study-sport-filter" class="custom-select">
-            <option value="all">전체 종목 (194명)</option>
-            <option value="야구">⚾ 야구 (43명)</option>
-            <option value="축구">⚽ 축구 (44명)</option>
-            <option value="아이스하키">🏒 빙구 (39명)</option>
-            <option value="럭비">🏉 럭비 (47명)</option>
-            <option value="농구">🏀 농구 (21명)</option>
-          </select>
-          <select id="study-school-filter" class="custom-select">
-            <option value="all">양교 전체</option>
-            <option value="고려대">🔴 고려대</option>
-            <option value="연세대">🔵 연세대</option>
-          </select>
+
+        <!-- School Filter (Segmented) -->
+        <div class="study-filter-group">
+          <div class="study-school-chips" id="study-school-chips">
+            <button class="study-filter-chip active" data-school="all" type="button">양교 전체</button>
+            <button class="study-filter-chip ku" data-school="고려대" type="button">🔴 고려대</button>
+            <button class="study-filter-chip yu" data-school="연세대" type="button">🔵 연세대</button>
+          </div>
         </div>
-        <div class="study-count-info" id="study-count-info">194명의 선수가 등록되어 있습니다.</div>
+
+        <!-- Sport Filter (Horizontal Scrollable Pills) -->
+        <div class="study-filter-group">
+          <div class="study-sport-chips-scroll" id="study-sport-chips">
+            <button class="study-sport-chip active" data-sport="all" type="button">🏆 전체 (194)</button>
+            <button class="study-sport-chip" data-sport="야구" type="button">⚾ 야구 (43)</button>
+            <button class="study-sport-chip" data-sport="축구" type="button">⚽ 축구 (44)</button>
+            <button class="study-sport-chip" data-sport="아이스하키" type="button">🏒 빙구 (39)</button>
+            <button class="study-sport-chip" data-sport="럭비" type="button">🏉 럭비 (47)</button>
+            <button class="study-sport-chip" data-sport="농구" type="button">🏀 농구 (21)</button>
+          </div>
+        </div>
+
+        <div class="study-count-info" id="study-count-info">전체 194명 중 194명 표시</div>
       </div>
 
       <!-- Player Cards Grid -->
@@ -299,11 +286,82 @@
         <!-- Populated by JS -->
       </div>
     </main>
+
+    <!-- ==================== GLOBAL MODALS ==================== -->
+    <!-- Answer Explanation & Player Profile Modal -->
+    <div id="modal-overlay" class="modal-overlay hidden" hidden>
+      <div class="modal-card">
+        <div class="modal-header-row">
+          <div id="modal-result-banner" class="result-banner correct">
+            <span class="result-icon">⭕</span>
+            <span class="result-title">정답입니다!</span>
+          </div>
+          <button id="modal-close-icon" class="icon-btn-close" aria-label="닫기">✕</button>
+        </div>
+
+        <!-- Large Player Photo Frame -->
+        <div class="modal-photo-container">
+          <div class="modal-photo-frame">
+            <img id="modal-player-img" src="" alt="선수 사진" class="modal-large-img">
+          </div>
+          <div id="modal-photo-badge" class="modal-photo-tag ku">🔴 고려대</div>
+        </div>
+
+        <!-- Player Basic Information Card -->
+        <div class="modal-player-info-card">
+          <div class="modal-name-row">
+            <h3 class="modal-name" id="modal-name">이동근</h3>
+            <span class="modal-num-badge" id="modal-num-badge">No. 18</span>
+          </div>
+          <div class="modal-tags-row">
+            <span class="modal-badge-pill" id="modal-school-badge">고려대 · 농구</span>
+            <span class="modal-badge-pill" id="modal-pos-badge">F</span>
+            <span class="modal-badge-pill" id="modal-grade-badge">체교 21</span>
+          </div>
+        </div>
+
+        <!-- KUBS Analysis Box -->
+        <div class="modal-analysis-box">
+          <div class="analysis-title">📊 KUBS 전력분석 코멘트</div>
+          <ul id="modal-highlights-list" class="analysis-list">
+            <!-- Populated by JS -->
+          </ul>
+        </div>
+
+        <button id="modal-next-btn" class="primary-btn modal-btn">
+          <span>다음 문제 풀기</span>
+          <span class="btn-arrow">➔</span>
+        </button>
+      </div>
+    </div>
+
+    <!-- Brag Score Image Preview Modal -->
+    <div id="brag-modal-overlay" class="modal-overlay hidden" hidden>
+      <div class="modal-card brag-modal-card">
+        <div class="brag-modal-header">
+          <h3 class="brag-modal-title">📸 내 점수 카드</h3>
+          <button id="brag-modal-close-icon" class="icon-btn-close" aria-label="닫기">✕</button>
+        </div>
+        <div class="brag-image-wrapper">
+          <img id="brag-preview-img" src="" alt="내 점수 카드 미리보기">
+        </div>
+        <div class="brag-modal-actions">
+          <button id="brag-download-btn" class="primary-btn">
+            <span>💾 이미지 저장하기 (다운로드)</span>
+          </button>
+          <button id="brag-share-native-btn" class="secondary-btn">
+            <span>📤 SNS / 카카오톡 공유하기</span>
+          </button>
+        </div>
+      </div>
+    </div>
+    <!-- Hidden Canvas for High-Resolution Card Generation -->
+    <canvas id="brag-canvas" width="800" height="1000" style="display:none;"></canvas>
   </div>
 
   <!-- Player Database (194 players) -->
-  <script src="data/players.js?v=20260925_brag_01"></script>
+  <script src="data/players.js?v=20260925_filter_01"></script>
   <!-- Main Application Logic -->
-  <script src="app.js?v=20260925_brag_01"></script>
+  <script src="app.js?v=20260925_filter_01"></script>
 </body>
 </html>

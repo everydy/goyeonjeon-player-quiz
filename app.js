@@ -9,9 +9,9 @@
   const startScreen = document.getElementById('start-screen');
   const quizScreen = document.getElementById('quiz-screen');
   const resultScreen = document.getElementById('result-screen');
-  const modalOverlay = document.getElementById('modal-overlay');
 
   // Filter Selectors (Quiz Start)
+  const quizTypeSelector = document.getElementById('quiz-type-selector');
   const difficultySelector = document.getElementById('difficulty-selector');
   const sportSelector = document.getElementById('sport-selector');
   const schoolSelector = document.getElementById('school-selector');
@@ -27,7 +27,18 @@
   const comboBadge = document.getElementById('combo-badge');
   const cardSportTag = document.getElementById('card-sport-tag');
   const cardDiffTag = document.getElementById('card-diff-tag');
+  const playerPhotoWrapper = document.getElementById('player-photo-wrapper');
   const playerImg = document.getElementById('player-img');
+
+  // Jersey Card DOM Elements (등번호 매칭 모드)
+  const jerseyCardWrapper = document.getElementById('jersey-card-wrapper');
+  const jerseyCard = document.getElementById('jersey-card');
+  const jerseySchoolBadge = document.getElementById('jersey-school-badge');
+  const jerseyNumVal = document.getElementById('jersey-num-val');
+  const jerseySportPill = document.getElementById('jersey-sport-pill');
+  const jerseyPosPill = document.getElementById('jersey-pos-pill');
+  const jerseyHintBtn = document.getElementById('jersey-hint-btn');
+  const quizQuestionTitle = document.getElementById('quiz-question-title');
 
   // Hints
   const hintBtn = document.getElementById('hint-btn');
@@ -49,11 +60,16 @@
   const giveUpBtn = document.getElementById('give-up-btn');
 
   // Modal Elements
+  const modalOverlay = document.getElementById('modal-overlay');
+  const modalCloseIcon = document.getElementById('modal-close-icon');
   const modalResultBanner = document.getElementById('modal-result-banner');
   const modalPlayerImg = document.getElementById('modal-player-img');
+  const modalPhotoBadge = document.getElementById('modal-photo-badge');
   const modalSchoolBadge = document.getElementById('modal-school-badge');
   const modalName = document.getElementById('modal-name');
-  const modalDetails = document.getElementById('modal-details');
+  const modalNumBadge = document.getElementById('modal-num-badge');
+  const modalPosBadge = document.getElementById('modal-pos-badge');
+  const modalGradeBadge = document.getElementById('modal-grade-badge');
   const modalHighlightsList = document.getElementById('modal-highlights-list');
   const modalNextBtn = document.getElementById('modal-next-btn');
 
@@ -79,13 +95,17 @@
 
   // Study View Elements
   const studySearchInput = document.getElementById('study-search-input');
-  const studySportFilter = document.getElementById('study-sport-filter');
-  const studySchoolFilter = document.getElementById('study-school-filter');
+  const studySchoolChips = document.getElementById('study-school-chips');
+  const studySportChips = document.getElementById('study-sport-chips');
   const studyCountInfo = document.getElementById('study-count-info');
   const rosterGridContainer = document.getElementById('roster-grid-container');
 
+  let currentStudySport = 'all';
+  let currentStudySchool = 'all';
+
   // App State
   let soundEnabled = true;
+  let selectedQuizType = 'face'; // 'face' or 'number'
   let selectedDifficulty = 'choice'; // 'choice' or 'input'
   let selectedSport = 'all';
   let selectedSchool = 'all';
@@ -212,6 +232,29 @@
   });
 
   // Filter Selectors Setup
+  if (quizTypeSelector) {
+    quizTypeSelector.addEventListener('click', (e) => {
+      const btn = e.target.closest('.mode-card-btn') || e.target.closest('.chip');
+      if (!btn) return;
+      quizTypeSelector.querySelectorAll('.mode-card-btn, .chip').forEach(c => c.classList.remove('active'));
+      btn.classList.add('active');
+      selectedQuizType = btn.dataset.type;
+
+      // Dynamically sync hero title & desc to selected mode
+      const heroTitleEl = document.querySelector('.hero-title');
+      const heroDescEl = document.querySelector('.hero-desc');
+      if (selectedQuizType === 'number') {
+        if (heroTitleEl) heroTitleEl.innerHTML = '등번호 보고<br><span class="highlight-red">선수 이름</span> 맞추기';
+        if (heroDescEl) heroDescEl.textContent = '5개 종목 선수들의 고유 등번호와 포지션을 보고 누구인지 이름을 맞춰보세요!';
+      } else {
+        if (heroTitleEl) heroTitleEl.innerHTML = '얼굴 보고<br><span class="highlight-red">선수 이름</span> 맞추기';
+        if (heroDescEl) heroDescEl.textContent = '5개 전 종목(농구, 야구, 빙구, 럭비, 축구) 194명의 얼굴과 전력분석 정보를 완벽하게 암기해보세요!';
+      }
+
+      playSound('click');
+    });
+  }
+
   difficultySelector.addEventListener('click', (e) => {
     const chip = e.target.closest('.chip');
     if (!chip) return;
@@ -322,15 +365,21 @@
     let pool = allPlayers.filter(p => {
       const matchSport = (selectedSport === 'all') || (p.sport === selectedSport);
       const matchSchool = (selectedSchool === 'all') || (p.school === selectedSchool);
-      return matchSport && matchSchool;
+      // In 'number' mode (등번호 매칭), only include players with valid registered jersey numbers!
+      const matchNumber = (selectedQuizType !== 'number') || (p.number && p.number !== '-');
+      return matchSport && matchSchool && matchNumber;
     });
 
     if (pool.length < 4 && selectedDifficulty === 'choice') {
-      pool = allPlayers.filter(p => selectedSport === 'all' || p.sport === selectedSport);
+      pool = allPlayers.filter(p => {
+        const matchSport = (selectedSport === 'all') || (p.sport === selectedSport);
+        const matchNumber = (selectedQuizType !== 'number') || (p.number && p.number !== '-');
+        return matchSport && matchNumber;
+      });
     }
 
     if (!pool.length) {
-      alert('선택하신 조건에 해당하는 선수가 없습니다.');
+      alert('선택하신 조건에 해당하는 선수가 없습니다. (등번호 매칭 모드는 등번호가 등록된 선수만 출제됩니다)');
       return;
     }
 
@@ -360,6 +409,7 @@
     isAnswerLocked = false;
     hideElement(hintBox);
     hintBtn.textContent = '💡 힌트 보기';
+    if (jerseyHintBtn) jerseyHintBtn.textContent = '💡 힌트 보기';
 
     const player = quizQuestions[currentIndex];
     const total = quizQuestions.length;
@@ -380,12 +430,32 @@
     // Meta Tags
     const icon = sportIcons[player.sport] || '🏅';
     cardSportTag.textContent = `${icon} ${player.sport}`;
-    cardDiffTag.textContent = selectedDifficulty === 'choice' ? '보통' : '어려움';
+    const diffLabel = selectedDifficulty === 'choice' ? '보통' : '어려움';
+    const typeLabel = selectedQuizType === 'number' ? '등번호 매칭' : '얼굴 매칭';
+    cardDiffTag.textContent = `${typeLabel} · ${diffLabel}`;
 
-    // Photo with error fallback
-    applyImageFallback(playerImg, player);
-    playerImg.src = player.image;
-    playerImg.alt = `${player.school} ${player.sport} 선수`;
+    // Mode Display: Face vs Jersey Number
+    if (selectedQuizType === 'number') {
+      hideElement(playerPhotoWrapper);
+      showElement(jerseyCardWrapper);
+      jerseyCard.className = `jersey-card ${player.school === '고려대' ? 'ku' : 'yu'}`;
+      jerseySchoolBadge.textContent = (player.school === '고려대' ? '🔴 고려대학교' : '🔵 연세대학교');
+      jerseyNumVal.textContent = player.number;
+      jerseySportPill.textContent = `${icon} ${player.sport}`;
+      jerseyPosPill.textContent = player.position ? `포지션: ${player.position}` : (player.grade || '선수');
+      if (quizQuestionTitle) {
+        quizQuestionTitle.textContent = `등번호 [${player.number}번] 선수의 이름은?`;
+      }
+    } else {
+      showElement(playerPhotoWrapper);
+      hideElement(jerseyCardWrapper);
+      applyImageFallback(playerImg, player);
+      playerImg.src = player.image;
+      playerImg.alt = `${player.school} ${player.sport} 선수`;
+      if (quizQuestionTitle) {
+        quizQuestionTitle.textContent = '이 선수의 이름은?';
+      }
+    }
 
     // Hints
     hintNum.textContent = (player.number && player.number !== '-') ? `${player.number}번` : '미기재';
@@ -553,49 +623,114 @@
   showChosungBtn.addEventListener('click', () => {
     showElement(hintBox);
     hintBtn.textContent = '💡 힌트 접기';
+    if (jerseyHintBtn) jerseyHintBtn.textContent = '💡 힌트 접기';
     playSound('click');
   });
 
   // Hint Toggle
-  hintBtn.addEventListener('click', () => {
+  function toggleHintBox() {
     const isHidden = hintBox.hidden || hintBox.classList.contains('hidden');
     if (isHidden) {
       showElement(hintBox);
       hintBtn.textContent = '💡 힌트 접기';
+      if (jerseyHintBtn) jerseyHintBtn.textContent = '💡 힌트 접기';
     } else {
       hideElement(hintBox);
       hintBtn.textContent = '💡 힌트 보기';
+      if (jerseyHintBtn) jerseyHintBtn.textContent = '💡 힌트 보기';
     }
     playSound('click');
-  });
+  }
 
-  // Explanation Modal
+  hintBtn.addEventListener('click', toggleHintBox);
+  if (jerseyHintBtn) {
+    jerseyHintBtn.addEventListener('click', toggleHintBox);
+  }
+
+  // Explanation / Profile Modal
   function showModal(player, isCorrect, isSkipped) {
-    if (isSkipped) {
-      modalResultBanner.className = 'result-banner skipped';
-      modalResultBanner.querySelector('.result-icon').textContent = '⏩';
-      modalResultBanner.querySelector('.result-title').textContent = `건너뜀: 이 선수는 ${player.name} 선수입니다.`;
-    } else if (isCorrect) {
-      modalResultBanner.className = 'result-banner correct';
-      modalResultBanner.querySelector('.result-icon').textContent = '⭕';
-      modalResultBanner.querySelector('.result-title').textContent = '정답입니다!';
+    const isStudyMode = (!studyFlowContainer.hidden);
+    const isResultReview = (resultScreen.classList.contains('active'));
+
+    if (isStudyMode) {
+      modalResultBanner.className = `result-banner info-banner ${player.school === '고려대' ? 'ku' : 'yu'}`;
+      modalResultBanner.querySelector('.result-icon').textContent = (player.school === '고려대' ? '🔴' : '🔵');
+      modalResultBanner.querySelector('.result-title').textContent = `${player.school} ${player.sport} · ${player.name} 선수`;
+    } else if (isResultReview) {
+      if (isSkipped) {
+        modalResultBanner.className = 'result-banner skipped';
+        modalResultBanner.querySelector('.result-icon').textContent = '⏩';
+        modalResultBanner.querySelector('.result-title').textContent = `건너뜀 · ${player.name} 선수`;
+      } else if (isCorrect) {
+        modalResultBanner.className = 'result-banner correct';
+        modalResultBanner.querySelector('.result-icon').textContent = '⭕';
+        modalResultBanner.querySelector('.result-title').textContent = `정답! · ${player.name} 선수`;
+      } else {
+        modalResultBanner.className = 'result-banner wrong';
+        modalResultBanner.querySelector('.result-icon').textContent = '❌';
+        modalResultBanner.querySelector('.result-title').textContent = `오답 · 정답은 ${player.name} 선수`;
+      }
     } else {
-      modalResultBanner.className = 'result-banner wrong';
-      modalResultBanner.querySelector('.result-icon').textContent = '❌';
-      modalResultBanner.querySelector('.result-title').textContent = `아쉬워요! 정답은 ${player.name} 선수입니다.`;
+      if (isSkipped) {
+        modalResultBanner.className = 'result-banner skipped';
+        modalResultBanner.querySelector('.result-icon').textContent = '⏩';
+        modalResultBanner.querySelector('.result-title').textContent = `건너뜀: 이 선수는 ${player.name} 선수입니다.`;
+      } else if (isCorrect) {
+        modalResultBanner.className = 'result-banner correct';
+        modalResultBanner.querySelector('.result-icon').textContent = '⭕';
+        modalResultBanner.querySelector('.result-title').textContent = '정답입니다!';
+      } else {
+        modalResultBanner.className = 'result-banner wrong';
+        modalResultBanner.querySelector('.result-icon').textContent = '❌';
+        modalResultBanner.querySelector('.result-title').textContent = `아쉬워요! 정답은 ${player.name} 선수입니다.`;
+      }
     }
 
     applyImageFallback(modalPlayerImg, player);
     modalPlayerImg.src = player.image;
-    modalSchoolBadge.textContent = `${player.school} · ${player.sport}`;
-    modalSchoolBadge.style.color = player.school === '고려대' ? '#ff6b81' : '#60a5fa';
+
+    // Photo School Tag
+    if (modalPhotoBadge) {
+      modalPhotoBadge.className = `modal-photo-tag ${player.school === '고려대' ? 'ku' : 'yu'}`;
+      modalPhotoBadge.textContent = `${player.school === '고려대' ? '🔴 고려대학교' : '🔵 연세대학교'}`;
+    }
+
+    // Name & Badges
     modalName.textContent = player.name;
 
-    const numStr = (player.number && player.number !== '-') ? `등번호 ${player.number}번` : '등번호 미기재';
-    const posStr = player.position ? ` · ${player.position}` : '';
-    const gradeStr = player.grade ? ` · ${player.grade}` : '';
-    modalDetails.textContent = `${numStr}${posStr}${gradeStr}`;
+    if (modalNumBadge) {
+      if (player.number && player.number !== '-') {
+        modalNumBadge.textContent = `No. ${player.number}`;
+        modalNumBadge.style.display = 'inline-flex';
+      } else {
+        modalNumBadge.style.display = 'none';
+      }
+    }
 
+    if (modalSchoolBadge) {
+      modalSchoolBadge.textContent = `${player.school} · ${player.sport}`;
+      modalSchoolBadge.className = `modal-badge-pill ${player.school === '고려대' ? 'ku' : 'yu'}`;
+    }
+
+    if (modalPosBadge) {
+      if (player.position) {
+        modalPosBadge.textContent = player.position;
+        modalPosBadge.style.display = 'inline-flex';
+      } else {
+        modalPosBadge.style.display = 'none';
+      }
+    }
+
+    if (modalGradeBadge) {
+      if (player.grade) {
+        modalGradeBadge.textContent = player.grade;
+        modalGradeBadge.style.display = 'inline-flex';
+      } else {
+        modalGradeBadge.style.display = 'none';
+      }
+    }
+
+    // Highlights list
     modalHighlightsList.innerHTML = '';
     if (player.highlights && player.highlights.length) {
       player.highlights.forEach(h => {
@@ -603,18 +738,26 @@
         li.textContent = h;
         modalHighlightsList.appendChild(li);
       });
+    } else {
+      const li = document.createElement('li');
+      li.textContent = '등록된 추가 전력분석 정보가 없습니다.';
+      modalHighlightsList.appendChild(li);
     }
 
-    const isLast = (currentIndex === quizQuestions.length - 1);
-    modalNextBtn.querySelector('span:first-child').textContent = isLast ? '최종 결과 확인하기' : '다음 문제 풀기';
+    // Button Label
+    if (isStudyMode || isResultReview) {
+      modalNextBtn.querySelector('span:first-child').textContent = '닫기';
+    } else {
+      const isLast = (currentIndex === quizQuestions.length - 1);
+      modalNextBtn.querySelector('span:first-child').textContent = isLast ? '최종 결과 확인하기' : '다음 문제 풀기';
+    }
 
     showElement(modalOverlay);
   }
 
-  modalNextBtn.addEventListener('click', () => {
+  function handleModalDismiss() {
     hideElement(modalOverlay);
     playSound('click');
-    // If opened from Study mode or Results Review mode, just close the modal!
     if (!studyFlowContainer.hidden || resultScreen.classList.contains('active')) {
       return;
     }
@@ -624,7 +767,19 @@
     } else {
       showResults();
     }
-  });
+  }
+
+  modalNextBtn.addEventListener('click', handleModalDismiss);
+  if (modalCloseIcon) {
+    modalCloseIcon.addEventListener('click', handleModalDismiss);
+  }
+  if (modalOverlay) {
+    modalOverlay.addEventListener('click', (e) => {
+      if (e.target === modalOverlay) {
+        handleModalDismiss();
+      }
+    });
+  }
 
   // Give Up
   giveUpBtn.addEventListener('click', () => {
@@ -1075,8 +1230,8 @@
   function renderRoster() {
     const allPlayers = window.GOYEONJEON_PLAYERS || [];
     const query = studySearchInput.value.trim().toLowerCase();
-    const sportFilter = studySportFilter.value;
-    const schoolFilter = studySchoolFilter.value;
+    const sportFilter = currentStudySport;
+    const schoolFilter = currentStudySchool;
 
     const filtered = allPlayers.filter(p => {
       const matchSport = (sportFilter === 'all') || (p.sport === sportFilter);
@@ -1105,18 +1260,37 @@
       const img = card.querySelector('img');
       applyImageFallback(img, p);
       card.addEventListener('click', () => {
+        playSound('click');
         showModal(p, true, false);
-        modalResultBanner.className = 'result-banner correct';
-        modalResultBanner.querySelector('.result-icon').textContent = '📋';
-        modalResultBanner.querySelector('.result-title').textContent = `${p.school} ${p.name} 선수`;
-        modalNextBtn.querySelector('span:first-child').textContent = '닫기';
       });
       rosterGridContainer.appendChild(card);
     });
   }
 
   studySearchInput.addEventListener('input', renderRoster);
-  studySportFilter.addEventListener('change', renderRoster);
-  studySchoolFilter.addEventListener('change', renderRoster);
+
+  if (studySchoolChips) {
+    studySchoolChips.addEventListener('click', (e) => {
+      const chip = e.target.closest('.study-filter-chip');
+      if (!chip) return;
+      studySchoolChips.querySelectorAll('.study-filter-chip').forEach(c => c.classList.remove('active'));
+      chip.classList.add('active');
+      currentStudySchool = chip.dataset.school;
+      playSound('click');
+      renderRoster();
+    });
+  }
+
+  if (studySportChips) {
+    studySportChips.addEventListener('click', (e) => {
+      const chip = e.target.closest('.study-sport-chip');
+      if (!chip) return;
+      studySportChips.querySelectorAll('.study-sport-chip').forEach(c => c.classList.remove('active'));
+      chip.classList.add('active');
+      currentStudySport = chip.dataset.sport;
+      playSound('click');
+      renderRoster();
+    });
+  }
 
 })();
